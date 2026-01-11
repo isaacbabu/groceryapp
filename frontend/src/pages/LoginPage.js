@@ -16,11 +16,14 @@ const LoginPage = () => {
     <div className="h-screen flex items-center justify-center bg-zinc-50">
       <div className="text-center space-y-8 max-w-md px-4">
         <div>
-          <h1 className="text-5xl font-bold font-primary text-emerald-950 tracking-tight mb-3">
-            Grocery Billing
+          <h1 className="text-4xl md:text-5xl font-bold font-primary text-emerald-950 tracking-tight mb-2">
+            Emmanuel Agencies
           </h1>
-          <p className="text-zinc-600 font-secondary text-lg">
-            Modern ledger for your grocery store
+          <p className="text-xl text-emerald-800 font-secondary font-medium mb-3">
+            Online Grocery Shopping
+          </p>
+          <p className="text-zinc-600 font-secondary text-base italic">
+            "The products you need, at prices you'll love, delivered with care."
           </p>
         </div>
         
