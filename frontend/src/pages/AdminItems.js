@@ -299,17 +299,21 @@ const AdminItems = ({ user }) => {
 
             <div>
               <Label htmlFor="image" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">
-                Image URL *
+                <Upload className="h-4 w-4 inline mr-1" /> Upload Image * (Max 5MB)
               </Label>
               <Input
                 id="image"
                 data-testid="item-image-input"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://example.com/image.jpg"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadingImage}
                 className="font-secondary"
               />
-              {formData.image_url && (
+              {uploadingImage && (
+                <p className="text-sm text-zinc-500 mt-2">Uploading image...</p>
+              )}
+              {formData.image_url && !uploadingImage && (
                 <div className="mt-2">
                   <img
                     src={formData.image_url}
@@ -317,7 +321,7 @@ const AdminItems = ({ user }) => {
                     className="w-32 h-32 object-cover rounded-lg border border-zinc-200"
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      toast.error('Invalid image URL');
+                      toast.error('Invalid image');
                     }}
                   />
                 </div>
