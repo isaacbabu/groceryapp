@@ -172,36 +172,37 @@ const BillingPage = ({ user }) => {
             <table className="w-full">
               <thead>
                 <tr className="bg-zinc-50 border-b border-zinc-200">
-                  <th className="h-12 px-4 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Sl No</th>
-                  <th className="h-12 px-4 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Item Name</th>
-                  <th className="h-12 px-4 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Rate</th>
-                  <th className="h-12 px-4 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Quantity</th>
-                  <th className="h-12 px-4 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Total</th>
-                  <th className="h-12 px-4 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider"></th>
+                  <th className="h-10 px-2 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Sl No</th>
+                  <th className="h-10 px-2 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Item Name</th>
+                  <th className="h-10 px-2 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Rate</th>
+                  <th className="h-10 px-2 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Quantity</th>
+                  <th className="h-10 px-2 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider">Total</th>
+                  <th className="h-10 px-2 text-left align-middle font-primary text-xs font-bold text-zinc-500 uppercase tracking-wider w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {billingRows.map((row, index) => (
                   <tr key={row.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors group" data-testid={`billing-row-${index}`}>
-                    <td className="p-4 align-middle font-mono text-sm text-zinc-700">{index + 1}</td>
-                    <td className="p-4 align-middle font-secondary text-sm text-zinc-700">{row.item_name}</td>
-                    <td className="p-4 align-middle font-mono text-sm text-emerald-700">₹{row.rate.toFixed(2)}</td>
-                    <td className="p-4 align-middle">
+                    <td className="p-2 align-middle font-mono text-sm text-zinc-700">{index + 1}</td>
+                    <td className="p-2 align-middle font-secondary text-sm text-zinc-700">{row.item_name}</td>
+                    <td className="p-2 align-middle font-mono text-sm text-emerald-700">₹{row.rate.toFixed(2)}</td>
+                    <td className="p-2 align-middle">
                       <Input
                         data-testid={`qty-input-${index}`}
                         type="number"
                         min="1"
                         value={row.quantity}
                         onChange={(e) => updateQuantity(row.id, e.target.value)}
-                        className="h-9 w-20 bg-transparent border border-zinc-200 rounded-md px-3 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
+                        placeholder="0"
+                        className="h-8 w-16 bg-transparent border border-zinc-200 rounded-md px-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
                       />
                     </td>
-                    <td className="p-4 align-middle font-mono text-sm font-medium text-emerald-900">₹{row.total.toFixed(2)}</td>
-                    <td className="p-4 align-middle">
+                    <td className="p-2 align-middle font-mono text-sm font-medium text-emerald-900">₹{row.total.toFixed(2)}</td>
+                    <td className="p-2 align-middle">
                       <button
                         data-testid={`delete-row-btn-${index}`}
                         onClick={() => deleteRow(row.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-rose-500 p-2"
+                        className="text-zinc-400 hover:text-rose-500 p-1 transition-colors"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
