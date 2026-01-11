@@ -116,7 +116,7 @@ const BillingPage = ({ user }) => {
     <div className="h-screen flex flex-col md:flex-row overflow-hidden bg-zinc-50">
       {/* Sidebar */}
       <Sheet>
-        <div className="md:hidden fixed top-4 left-4 z-50">
+        <div className="fixed top-4 left-4 z-50">
           <SheetTrigger asChild>
             <Button data-testid="menu-btn" variant="outline" size="icon" className="bg-white shadow-sm">
               <Menu className="h-5 w-5" />
