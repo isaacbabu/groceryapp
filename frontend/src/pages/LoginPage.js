@@ -23,7 +23,7 @@ const LoginPage = () => {
             Online Grocery Shopping
           </p>
           <p className="text-zinc-600 font-secondary text-base italic">
-            "The products you need, at prices you'll love, delivered with care."
+            &ldquo;The products you need, at prices you&apos;ll love, delivered with care.&rdquo;
           </p>
         </div>
         
