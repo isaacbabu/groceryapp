@@ -153,21 +153,25 @@ const BillingPage = ({ user }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full relative pt-16 md:pt-0">
         {/* Header */}
-        <div className="bg-white border-b border-zinc-200 px-4 md:px-8 py-4 shadow-sm">
+        <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold font-primary text-emerald-950 tracking-tight">Billing</h1>
-              <p className="text-sm text-zinc-500 font-secondary mt-1">Create new bill</p>
+              <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
+              <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-zinc-400 uppercase tracking-widest font-primary font-bold">User</p>
-              <p className="text-sm font-medium text-emerald-900 font-secondary">{user?.name}</p>
+              <p className="text-xs text-emerald-200 uppercase tracking-widest font-primary font-bold">User</p>
+              <p className="text-sm font-medium text-white font-secondary">{user?.name}</p>
             </div>
           </div>
         </div>
 
-        {/* Table Container */}
-        <div className="flex-1 overflow-auto p-4 md:p-8">
+        {/* Table Container - Fixed height with scroll */}
+        <div className="flex-1 overflow-auto p-4 md:p-8 pb-2">
+          <div className="mb-2">
+            <h2 className="text-lg font-bold font-primary text-emerald-950 mb-1">Billing</h2>
+            <p className="text-sm text-zinc-500 font-secondary">Create new bill</p>
+          </div>
           <div className="w-full border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
             <table className="w-full">
               <thead>
