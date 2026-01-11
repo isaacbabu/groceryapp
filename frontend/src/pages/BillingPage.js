@@ -107,7 +107,7 @@ const BillingPage = ({ user }) => {
 
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden bg-zinc-50">
-      {/* Sidebar */}
+      {/* Sidebar Sheet */}
       <Sheet>
         <SheetContent side="left" className="w-72 p-0">
           <SheetHeader className="p-6 border-b border-zinc-200">
@@ -134,28 +134,28 @@ const BillingPage = ({ user }) => {
           </nav>
         </SheetContent>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-full relative">
-        {/* Header */}
-        <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SheetTrigger asChild>
-                <Button data-testid="menu-btn" variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-emerald-800 hover:text-white p-0">
-                  <Menu className="h-5 w-5" strokeWidth={1.5} />
-                </Button>
-              </SheetTrigger>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
-                <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col h-full relative">
+          {/* Header */}
+          <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <SheetTrigger asChild>
+                  <Button data-testid="menu-btn" variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-emerald-800 hover:text-white p-0">
+                    <Menu className="h-5 w-5" strokeWidth={1.5} />
+                  </Button>
+                </SheetTrigger>
+                <div>
+                  <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
+                  <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-emerald-200 uppercase tracking-widest font-primary font-bold">User</p>
+                <p className="text-sm font-medium text-white font-secondary">{user?.name}</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-emerald-200 uppercase tracking-widest font-primary font-bold">User</p>
-              <p className="text-sm font-medium text-white font-secondary">{user?.name}</p>
-            </div>
           </div>
-        </div>
 
         {/* Table Container - Fixed height with scroll */}
         <div className="flex-1 overflow-auto p-3 md:p-8 pb-1">
