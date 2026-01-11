@@ -35,12 +35,6 @@ const BillingPage = ({ user }) => {
     setGrandTotal(total);
   }, [billingRows]);
 
-  useEffect(() => {
-    if (showModal && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [showModal]);
-
   const addItemToBill = (item) => {
     const newRow = {
       id: Date.now(),
