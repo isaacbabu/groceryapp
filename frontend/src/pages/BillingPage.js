@@ -268,8 +268,7 @@ const BillingPage = ({ user }) => {
                 <div
                   key={item.item_id}
                   data-testid={`item-card-${item.item_id}`}
-                  className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-emerald-500/50 hover:shadow-lg transition-all cursor-pointer"
-                  onClick={() => addItemToBill(item)}
+                  className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-emerald-500/50 hover:shadow-lg transition-all"
                 >
                   <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100">
                     <img
@@ -281,9 +280,13 @@ const BillingPage = ({ user }) => {
                   <div className="p-4">
                     <h3 className="font-primary font-bold text-zinc-900 truncate">{item.name}</h3>
                     <p className="font-mono text-emerald-700 font-medium mt-1">₹{item.rate.toFixed(2)}</p>
-                  </div>
-                  <div className="absolute bottom-4 right-4 h-8 w-8 rounded-full bg-lime-400 text-lime-950 flex items-center justify-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-sm">
-                    <Plus className="h-4 w-4" />
+                    <button
+                      data-testid={`add-item-btn-${item.item_id}`}
+                      onClick={() => addItemToBill(item)}
+                      className="mt-3 w-full h-9 rounded-md bg-lime-400 hover:bg-lime-500 text-lime-950 flex items-center justify-center transition-colors shadow-sm font-secondary font-medium text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Item
+                    </button>
                   </div>
                 </div>
               ))}
