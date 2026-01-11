@@ -218,7 +218,16 @@ const AdminDashboard = ({ user }) => {
                     </table>
                   </div>
 
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {order.status === 'Pending' && (
+                      <Button
+                        data-testid={`confirm-order-btn-${order.order_id}`}
+                        onClick={() => handleConfirmOrder(order.order_id)}
+                        className="bg-emerald-900 hover:bg-emerald-950 text-white font-secondary"
+                      >
+                        Confirm Order
+                      </Button>
+                    )}
                     <Button
                       data-testid={`admin-delete-order-btn-${order.order_id}`}
                       onClick={() => setDeleteOrderId(order.order_id)}
