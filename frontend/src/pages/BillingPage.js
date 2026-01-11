@@ -289,6 +289,8 @@ const BillingPage = ({ user }) => {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
+      </Sheet>
     </div>
   );
 };
