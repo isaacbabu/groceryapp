@@ -33,6 +33,7 @@ const AdminItems = ({ user }) => {
     image_url: '',
     category: 'Vegetables'
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!user?.is_admin) {
@@ -52,6 +53,41 @@ const AdminItems = ({ user }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      e.target.value = '';
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadingImage(true);
+    const reader = new FileReader();
+    
+    reader.onloadend = () => {
+      setFormData({ ...formData, image_url: reader.result });
+      setUploadingImage(false);
+      toast.success('Image uploaded successfully');
+    };
+    
+    reader.onerror = () => {
+      toast.error('Failed to upload image');
+      setUploadingImage(false);
+    };
+    
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
