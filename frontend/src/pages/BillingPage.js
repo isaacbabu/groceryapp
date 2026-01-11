@@ -167,10 +167,10 @@ const BillingPage = ({ user }) => {
         </div>
 
         {/* Table Container - Fixed height with scroll */}
-        <div className="flex-1 overflow-auto p-4 md:p-8 pb-2">
+        <div className="flex-1 overflow-auto p-3 md:p-8 pb-1">
           <div className="mb-2">
-            <h2 className="text-lg font-bold font-primary text-emerald-950 mb-1">Billing</h2>
-            <p className="text-sm text-zinc-500 font-secondary">Create new bill</p>
+            <h2 className="text-base md:text-lg font-bold font-primary text-emerald-950 mb-1">Billing</h2>
+            <p className="text-xs md:text-sm text-zinc-500 font-secondary">Create new bill</p>
           </div>
           <div className="w-full border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
             <table className="w-full">
