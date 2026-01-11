@@ -52,8 +52,7 @@ const UserProfile = ({ user: initialUser }) => {
         </div>
       </div>
 
-      <div className="py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="py-8 px-4 max-w-2xl mx-auto">
         <div className="mb-6">
           <Button
             data-testid="back-btn"
