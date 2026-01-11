@@ -110,14 +110,6 @@ const BillingPage = ({ user }) => {
     <div className="h-screen flex flex-col md:flex-row overflow-hidden bg-zinc-50">
       {/* Sidebar */}
       <Sheet>
-        <div className="fixed top-4 left-4 z-50">
-          <SheetTrigger asChild>
-            <Button data-testid="menu-btn" variant="outline" size="icon" className="bg-white shadow-sm">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-        </div>
-        
         <SheetContent side="left" className="w-72 p-0">
           <SheetHeader className="p-6 border-b border-zinc-200">
             <SheetTitle className="font-primary text-xl font-bold text-emerald-950">Menu</SheetTitle>
@@ -142,16 +134,22 @@ const BillingPage = ({ user }) => {
             </Button>
           </nav>
         </SheetContent>
-      </Sheet>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-full relative pt-16 md:pt-0">
+      <div className="flex-1 flex flex-col h-full relative">
         {/* Header */}
         <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
-              <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
+            <div className="flex items-center gap-3">
+              <SheetTrigger asChild>
+                <Button data-testid="menu-btn" variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-emerald-800 hover:text-white p-0">
+                  <Menu className="h-5 w-5" strokeWidth={1.5} />
+                </Button>
+              </SheetTrigger>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
+                <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
+              </div>
             </div>
             <div className="text-right">
               <p className="text-xs text-emerald-200 uppercase tracking-widest font-primary font-bold">User</p>
