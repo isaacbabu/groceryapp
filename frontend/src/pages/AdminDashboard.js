@@ -118,7 +118,11 @@ const AdminDashboard = ({ user }) => {
                     </div>
                     <div>
                       <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Status</p>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 font-secondary">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium font-secondary ${
+                        order.status === 'Order Confirmed' 
+                          ? 'bg-emerald-100 text-emerald-900' 
+                          : 'bg-amber-100 text-amber-900'
+                      }`}>
                         {order.status}
                       </span>
                     </div>
