@@ -188,7 +188,8 @@ const BillingPage = ({ user }) => {
                       <Input
                         data-testid={`qty-input-${index}`}
                         type="number"
-                        min="1"
+                        min="0"
+                        step="0.1"
                         value={row.quantity}
                         onChange={(e) => updateQuantity(row.id, e.target.value)}
                         placeholder="0"
