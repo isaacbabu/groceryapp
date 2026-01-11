@@ -15,7 +15,6 @@ const BillingPage = ({ user }) => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [grandTotal, setGrandTotal] = useState(0);
-  const searchInputRef = useRef(null);
 
   const fetchItems = async () => {
     try {
