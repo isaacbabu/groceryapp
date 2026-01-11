@@ -341,6 +341,26 @@ async def get_all_orders(request: Request, session_token: Optional[str] = Cookie
     
     return orders
 
+@api_router.patch("/admin/orders/{order_id}/confirm")
+async def confirm_order(order_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.orders.update_one(
+        {"order_id": order_id},
+        {"$set": {"status": "Order Confirmed"}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    updated_order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
+    if isinstance(updated_order['created_at'], str):
+        updated_order['created_at'] = datetime.fromisoformat(updated_order['created_at'])
+    
+    return Order(**updated_order)
+
 app.include_router(api_router)
 
 app.add_middleware(
