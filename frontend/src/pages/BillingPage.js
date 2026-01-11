@@ -230,16 +230,16 @@ const BillingPage = ({ user }) => {
           </div>
         </div>
 
-        {/* Bottom Bar - Always visible */}
-        <div className="h-20 md:h-24 bg-white border-t border-zinc-200 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-3 md:py-0 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-          <div className="flex flex-col items-end mb-2 md:mb-0">
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1 font-primary">Grand Total</p>
-            <p className="text-3xl md:text-5xl font-mono font-bold text-emerald-950 tracking-tighter" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
+        {/* Bottom Bar - Always visible, compact for mobile */}
+        <div className="h-16 md:h-24 bg-white border-t border-zinc-200 flex flex-row items-center justify-between px-3 md:px-8 gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
+          <div className="flex flex-col items-start">
+            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
+            <p className="text-xl md:text-5xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
           </div>
           <Button
             data-testid="place-order-btn"
             onClick={placeOrder}
-            className="bg-lime-400 hover:bg-lime-500 text-lime-950 h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all w-full md:w-auto"
+            className="bg-lime-400 hover:bg-lime-500 text-lime-950 h-12 md:h-14 px-4 md:px-8 text-sm md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0"
           >
             Place Order
           </Button>
