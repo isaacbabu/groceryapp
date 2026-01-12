@@ -153,14 +153,20 @@ async def create_session(request: Request, response: Response):
     
     existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
     
+    # Admin emails list
+    ADMIN_EMAILS = ["isaac.babu.personal@gmail.com"]
+    
     if existing_user:
         user_id = existing_user['user_id']
+        # Check if user should be admin
+        is_admin = user_email in ADMIN_EMAILS
         await db.users.update_one(
             {"user_id": user_id},
-            {"$set": {"name": user_name, "picture": user_picture}}
+            {"$set": {"name": user_name, "picture": user_picture, "is_admin": is_admin}}
         )
     else:
         user_id = f"user_{uuid.uuid4().hex[:12]}"
+        is_admin = user_email in ADMIN_EMAILS
         await db.users.insert_one({
             "user_id": user_id,
             "email": user_email,
@@ -168,7 +174,7 @@ async def create_session(request: Request, response: Response):
             "picture": user_picture,
             "phone_number": None,
             "home_address": None,
-            "is_admin": False,
+            "is_admin": is_admin,
             "created_at": datetime.now(timezone.utc)
         })
     
