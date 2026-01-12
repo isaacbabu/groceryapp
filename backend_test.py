@@ -12,6 +12,7 @@ class GroceryBillingAPITester:
         self.tests_passed = 0
         self.test_item_id = None
         self.test_order_id = None
+        self.sample_item = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, token=None, is_admin=False):
         """Run a single API test"""
