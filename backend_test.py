@@ -102,6 +102,24 @@ class GroceryBillingAPITester:
             print(f"   Email: {admin_data.get('email')}")
             print(f"   Is Admin: {admin_data.get('is_admin')}")
 
+    def test_seed_items_endpoint(self):
+        """Test seed items endpoint"""
+        print("\n" + "="*50)
+        print("TESTING SEED ITEMS ENDPOINT")
+        print("="*50)
+        
+        # Test POST /api/seed-items (no auth required)
+        success, seed_response = self.run_test(
+            "Seed Sample Items (/api/seed-items)",
+            "POST",
+            "seed-items",
+            200,
+            token=None
+        )
+        
+        if success and seed_response:
+            print(f"   Seed response: {seed_response.get('message')}")
+
     def test_items_endpoints(self):
         """Test items endpoints"""
         print("\n" + "="*50)
@@ -113,13 +131,109 @@ class GroceryBillingAPITester:
             "Get All Items (/api/items)",
             "GET",
             "items",
-            200
+            200,
+            token=None
         )
         
         if success and items_data:
             print(f"   Found {len(items_data)} items")
             if items_data:
                 print(f"   Sample item: {items_data[0].get('name')} - ${items_data[0].get('rate')}")
+                # Store first item for cart testing
+                self.sample_item = items_data[0]
+
+    def test_categories_endpoint(self):
+        """Test categories endpoint"""
+        print("\n" + "="*50)
+        print("TESTING CATEGORIES ENDPOINT")
+        print("="*50)
+        
+        # Test GET /api/categories (no auth required)
+        success, categories_data = self.run_test(
+            "Get Categories (/api/categories)",
+            "GET",
+            "categories",
+            200,
+            token=None
+        )
+        
+        if success and categories_data:
+            print(f"   Found {len(categories_data)} categories: {categories_data}")
+
+    def test_cart_endpoints(self):
+        """Test cart endpoints"""
+        print("\n" + "="*50)
+        print("TESTING CART ENDPOINTS")
+        print("="*50)
+        
+        # Test GET /api/cart (requires auth)
+        success, cart_data = self.run_test(
+            "Get User Cart (/api/cart)",
+            "GET",
+            "cart",
+            200
+        )
+        
+        if success and cart_data:
+            print(f"   Cart items count: {len(cart_data.get('items', []))}")
+        
+        # Test PUT /api/cart (requires auth) - Save/update cart
+        if hasattr(self, 'sample_item') and self.sample_item:
+            cart_update_data = {
+                "items": [
+                    {
+                        "item_id": self.sample_item["item_id"],
+                        "item_name": self.sample_item["name"],
+                        "rate": self.sample_item["rate"],
+                        "quantity": 2,
+                        "total": self.sample_item["rate"] * 2
+                    }
+                ]
+            }
+            
+            success, cart_response = self.run_test(
+                "Update Cart (/api/cart)",
+                "PUT",
+                "cart",
+                200,
+                data=cart_update_data
+            )
+            
+            if success and cart_response:
+                print(f"   Cart updated with {len(cart_response.get('items', []))} items")
+        
+        # Test GET /api/cart again to verify persistence
+        success, updated_cart = self.run_test(
+            "Get Updated Cart (/api/cart)",
+            "GET",
+            "cart",
+            200
+        )
+        
+        if success and updated_cart:
+            print(f"   Updated cart items count: {len(updated_cart.get('items', []))}")
+        
+        # Test DELETE /api/cart (requires auth) - Clear cart
+        success, clear_response = self.run_test(
+            "Clear Cart (/api/cart)",
+            "DELETE",
+            "cart",
+            200
+        )
+        
+        if success and clear_response:
+            print(f"   Cart cleared: {clear_response.get('message')}")
+        
+        # Test GET /api/cart after clearing
+        success, empty_cart = self.run_test(
+            "Get Cart After Clearing (/api/cart)",
+            "GET",
+            "cart",
+            200
+        )
+        
+        if success and empty_cart:
+            print(f"   Cart after clearing items count: {len(empty_cart.get('items', []))}")
 
     def test_user_profile_endpoints(self):
         """Test user profile endpoints"""
