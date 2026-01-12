@@ -6,7 +6,7 @@ from datetime import datetime
 class GroceryBillingAPITester:
     def __init__(self, base_url="https://grocery-helper-4.preview.emergentagent.com/api"):
         self.base_url = base_url
-        self.user_token = "test_session_1768150037995"
+        self.user_token = "test_session_788cab54e1f2"  # Updated with valid token
         self.admin_token = "admin_session_1768150043790"
         self.tests_run = 0
         self.tests_passed = 0
