@@ -1,33 +1,118 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Menu, Plus, Trash2, Search, LogOut, User, ShoppingBag, Info, LayoutDashboard } from 'lucide-react';
+import { Menu, Plus, Trash2, Search, LogOut, User, ShoppingBag, Info, LayoutDashboard, Phone, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 
-const BillingPage = ({ user }) => {
+const BillingPage = ({ user: initialUser }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(initialUser);
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [billingRows, setBillingRows] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [grandTotal, setGrandTotal] = useState(0);
+  const [cartLoaded, setCartLoaded] = useState(false);
+  
+  // Address modal state
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [homeAddress, setHomeAddress] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const fetchItems = async () => {
     try {
       const response = await axiosInstance.get('/items');
       setItems(response.data);
+      
+      // If no items, seed sample items
+      if (response.data.length === 0) {
+        await axiosInstance.post('/seed-items');
+        const newResponse = await axiosInstance.get('/items');
+        setItems(newResponse.data);
+      }
     } catch (error) {
       toast.error('Failed to load items');
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await axiosInstance.get('/categories');
+      setCategories(['All', ...response.data]);
+    } catch (error) {
+      console.error('Failed to load categories');
+    }
+  };
+
+  const loadCart = async () => {
+    try {
+      const response = await axiosInstance.get('/cart');
+      if (response.data.items && response.data.items.length > 0) {
+        const cartItems = response.data.items.map((item, index) => ({
+          id: Date.now() + index,
+          item_id: item.item_id,
+          item_name: item.item_name,
+          rate: item.rate,
+          quantity: item.quantity,
+          total: item.total,
+        }));
+        setBillingRows(cartItems);
+      }
+      setCartLoaded(true);
+    } catch (error) {
+      console.error('Failed to load cart');
+      setCartLoaded(true);
+    }
+  };
+
+  const saveCart = useCallback(async (rows) => {
+    if (!cartLoaded) return;
+    
+    try {
+      const cartItems = rows.map(row => ({
+        item_id: row.item_id,
+        item_name: row.item_name,
+        rate: row.rate,
+        quantity: row.quantity || 0,
+        total: row.total || 0,
+      }));
+      await axiosInstance.put('/cart', { items: cartItems });
+    } catch (error) {
+      console.error('Failed to save cart');
+    }
+  }, [cartLoaded]);
+
+  const clearCart = async () => {
+    try {
+      await axiosInstance.delete('/cart');
+    } catch (error) {
+      console.error('Failed to clear cart');
+    }
+  };
+
   useEffect(() => {
     fetchItems();
+    fetchCategories();
+    loadCart();
   }, []);
+
+  // Save cart whenever billingRows changes (after initial load)
+  useEffect(() => {
+    if (cartLoaded && billingRows.length >= 0) {
+      const timeoutId = setTimeout(() => {
+        saveCart(billingRows);
+      }, 500); // Debounce saves
+      return () => clearTimeout(timeoutId);
+    }
+  }, [billingRows, cartLoaded, saveCart]);
 
   useEffect(() => {
     const total = billingRows.reduce((sum, row) => sum + row.total, 0);
@@ -46,6 +131,7 @@ const BillingPage = ({ user }) => {
     setBillingRows([...billingRows, newRow]);
     setShowModal(false);
     setSearchQuery('');
+    setSelectedCategory('All');
     toast.success(`${item.name} added to bill`);
     
     setTimeout(() => {
@@ -66,15 +152,58 @@ const BillingPage = ({ user }) => {
     toast.success('Item removed from bill');
   };
 
+  const handleSaveProfileAndOrder = async () => {
+    if (!phoneNumber || !homeAddress) {
+      toast.error('Phone number and address are required');
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      // Save profile
+      const profileResponse = await axiosInstance.put('/user/profile', {
+        phone_number: phoneNumber,
+        home_address: homeAddress,
+      });
+      setUser(profileResponse.data);
+      
+      // Now place the order
+      await axiosInstance.post('/orders', {
+        items: billingRows,
+        grand_total: grandTotal,
+      });
+      
+      toast.success('Order placed successfully!');
+      setBillingRows([]);
+      setGrandTotal(0);
+      await clearCart();
+      setShowAddressModal(false);
+      setPhoneNumber('');
+      setHomeAddress('');
+    } catch (error) {
+      toast.error('Failed to place order');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const placeOrder = async () => {
     if (billingRows.length === 0) {
       toast.error('Add items to the bill first');
       return;
     }
 
+    // Check if any item has 0 quantity
+    const hasZeroQuantity = billingRows.some(row => !row.quantity || row.quantity <= 0);
+    if (hasZeroQuantity) {
+      toast.error('Please enter quantity for all items');
+      return;
+    }
+
+    // Check if user has phone and address
     if (!user.phone_number || !user.home_address) {
-      toast.error('Please complete your profile first');
-      navigate('/profile');
+      // Show address modal instead of redirecting
+      setShowAddressModal(true);
       return;
     }
 
@@ -86,6 +215,7 @@ const BillingPage = ({ user }) => {
       toast.success('Order placed successfully!');
       setBillingRows([]);
       setGrandTotal(0);
+      await clearCart();
     } catch (error) {
       toast.error('Failed to place order');
     }
@@ -101,9 +231,11 @@ const BillingPage = ({ user }) => {
     }
   };
 
-  const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden bg-zinc-50">
@@ -246,7 +378,7 @@ const BillingPage = ({ user }) => {
           </DialogHeader>
           
           <div className="p-6">
-            <div className="relative mb-6">
+            <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-400" />
               <Input
                 data-testid="item-search-input"
@@ -258,35 +390,123 @@ const BillingPage = ({ user }) => {
               />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto">
-              {filteredItems.map((item) => (
-                <div
-                  key={item.item_id}
-                  data-testid={`item-card-${item.item_id}`}
-                  className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-emerald-500/50 hover:shadow-lg transition-all"
+            {/* Category Filter */}
+            <div className="mb-6 flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  data-testid={`category-filter-${category.toLowerCase().replace(/\s+/g, '-')}`}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-full text-sm font-secondary font-medium transition-all ${
+                    selectedCategory === category
+                      ? 'bg-emerald-900 text-white'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                  }`}
                 >
-                  <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100">
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-primary font-bold text-zinc-900 truncate">{item.name}</h3>
-                    <p className="font-mono text-emerald-700 font-medium mt-1">₹{item.rate.toFixed(2)}</p>
-                    <button
-                      data-testid={`add-item-btn-${item.item_id}`}
-                      onClick={() => addItemToBill(item)}
-                      className="mt-3 w-full h-9 rounded-md bg-lime-400 hover:bg-lime-500 text-lime-950 flex items-center justify-center transition-colors shadow-sm font-secondary font-medium text-sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Item
-                    </button>
-                  </div>
-                </div>
+                  {category}
+                </button>
               ))}
             </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[50vh] overflow-y-auto">
+              {filteredItems.length === 0 ? (
+                <div className="col-span-full text-center py-12 text-zinc-500">
+                  <p className="font-secondary">No items found</p>
+                </div>
+              ) : (
+                filteredItems.map((item) => (
+                  <div
+                    key={item.item_id}
+                    data-testid={`item-card-${item.item_id}`}
+                    className="group relative flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white hover:border-emerald-500/50 hover:shadow-lg transition-all"
+                  >
+                    <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400';
+                        }}
+                      />
+                    </div>
+                    <div className="p-4">
+                      <span className="text-xs font-secondary text-emerald-600 uppercase tracking-wider">{item.category}</span>
+                      <h3 className="font-primary font-bold text-zinc-900 truncate mt-1">{item.name}</h3>
+                      <p className="font-mono text-emerald-700 font-medium mt-1">₹{item.rate.toFixed(2)}</p>
+                      <button
+                        data-testid={`add-item-btn-${item.item_id}`}
+                        onClick={() => addItemToBill(item)}
+                        className="mt-3 w-full h-9 rounded-md bg-lime-400 hover:bg-lime-500 text-lime-950 flex items-center justify-center transition-colors shadow-sm font-secondary font-medium text-sm"
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Item
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Address Requirement Modal */}
+      <Dialog open={showAddressModal} onOpenChange={setShowAddressModal}>
+        <DialogContent className="bg-white border-none shadow-2xl sm:max-w-[500px] p-0 overflow-hidden rounded-2xl">
+          <DialogHeader className="p-6 border-b border-zinc-100 bg-emerald-900">
+            <DialogTitle className="text-xl font-bold font-primary text-white">Complete Your Profile</DialogTitle>
+            <p className="text-sm text-emerald-100 font-secondary mt-1">We need your contact details to deliver your order</p>
+          </DialogHeader>
+          
+          <div className="p-6 space-y-6">
+            <div>
+              <Label htmlFor="modal-phone" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center">
+                <Phone className="h-4 w-4 mr-2" /> Phone Number *
+              </Label>
+              <Input
+                id="modal-phone"
+                data-testid="modal-phone-input"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Enter your phone number"
+                className="font-secondary h-12"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="modal-address" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center">
+                <MapPin className="h-4 w-4 mr-2" /> Delivery Address *
+              </Label>
+              <Input
+                id="modal-address"
+                data-testid="modal-address-input"
+                value={homeAddress}
+                onChange={(e) => setHomeAddress(e.target.value)}
+                placeholder="Enter your delivery address"
+                className="font-secondary h-12"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="p-6 pt-0 flex gap-3">
+            <Button
+              data-testid="modal-cancel-btn"
+              onClick={() => setShowAddressModal(false)}
+              variant="outline"
+              className="flex-1 h-12 font-secondary"
+            >
+              Cancel
+            </Button>
+            <Button
+              data-testid="modal-save-order-btn"
+              onClick={handleSaveProfileAndOrder}
+              disabled={savingProfile}
+              className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white h-12 font-primary font-medium"
+            >
+              {savingProfile ? 'Processing...' : 'Save & Place Order'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       </Sheet>
