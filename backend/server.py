@@ -311,7 +311,7 @@ async def get_cart(request: Request, session_token: Optional[str] = Cookie(None)
 async def update_cart(cart_data: CartUpdate, request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
     
-    existing_cart = await db.carts.find_one({"user_id": user.user_id})
+    existing_cart = await db.carts.find_one({"user_id": user.user_id}, {"_id": 0})
     
     cart_doc = {
         "user_id": user.user_id,
