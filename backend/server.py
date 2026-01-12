@@ -296,6 +296,105 @@ async def delete_item(item_id: str, request: Request, session_token: Optional[st
     
     return {"message": "Item deleted"}
 
+# Cart endpoints
+@api_router.get("/cart")
+async def get_cart(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    cart = await db.carts.find_one({"user_id": user.user_id}, {"_id": 0})
+    if not cart:
+        return {"cart_id": None, "user_id": user.user_id, "items": [], "updated_at": None}
+    if isinstance(cart.get('updated_at'), str):
+        cart['updated_at'] = datetime.fromisoformat(cart['updated_at'])
+    return cart
+
+@api_router.put("/cart")
+async def update_cart(cart_data: CartUpdate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    
+    existing_cart = await db.carts.find_one({"user_id": user.user_id})
+    
+    cart_doc = {
+        "user_id": user.user_id,
+        "items": [item.model_dump() for item in cart_data.items],
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    if existing_cart:
+        await db.carts.update_one(
+            {"user_id": user.user_id},
+            {"$set": cart_doc}
+        )
+        cart_doc["cart_id"] = existing_cart["cart_id"]
+    else:
+        cart_doc["cart_id"] = f"cart_{uuid.uuid4().hex[:12]}"
+        await db.carts.insert_one(cart_doc)
+    
+    return cart_doc
+
+@api_router.delete("/cart")
+async def clear_cart(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    await db.carts.delete_one({"user_id": user.user_id})
+    return {"message": "Cart cleared"}
+
+# Seed sample items endpoint
+@api_router.post("/seed-items")
+async def seed_sample_items():
+    # Check if items already exist
+    existing_count = await db.items.count_documents({})
+    if existing_count > 0:
+        return {"message": f"Items already exist ({existing_count} items). Skipping seed."}
+    
+    sample_items = [
+        # Vegetables
+        {"name": "Fresh Tomatoes", "rate": 40.00, "category": "Vegetables", "image_url": "https://images.unsplash.com/photo-1546470427-227c7369a9b0?w=400"},
+        {"name": "Onions", "rate": 35.00, "category": "Vegetables", "image_url": "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=400"},
+        {"name": "Potatoes", "rate": 30.00, "category": "Vegetables", "image_url": "https://images.unsplash.com/photo-1518977676601-b53f82ber?w=400"},
+        {"name": "Carrots", "rate": 45.00, "category": "Vegetables", "image_url": "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400"},
+        # Fruits
+        {"name": "Bananas", "rate": 50.00, "category": "Fruits", "image_url": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400"},
+        {"name": "Apples", "rate": 180.00, "category": "Fruits", "image_url": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400"},
+        {"name": "Oranges", "rate": 80.00, "category": "Fruits", "image_url": "https://images.unsplash.com/photo-1547514701-42782101795e?w=400"},
+        {"name": "Grapes", "rate": 120.00, "category": "Fruits", "image_url": "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=400"},
+        # Dairy
+        {"name": "Fresh Milk (1L)", "rate": 60.00, "category": "Dairy", "image_url": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400"},
+        {"name": "Butter (500g)", "rate": 250.00, "category": "Dairy", "image_url": "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=400"},
+        {"name": "Cheese Slices", "rate": 150.00, "category": "Dairy", "image_url": "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400"},
+        {"name": "Yogurt (400g)", "rate": 45.00, "category": "Dairy", "image_url": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400"},
+        # Beverages
+        {"name": "Orange Juice (1L)", "rate": 120.00, "category": "Beverages", "image_url": "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400"},
+        {"name": "Green Tea (25 bags)", "rate": 180.00, "category": "Beverages", "image_url": "https://images.unsplash.com/photo-1556881286-fc6915169721?w=400"},
+        {"name": "Coffee Powder (200g)", "rate": 350.00, "category": "Beverages", "image_url": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400"},
+        # Snacks
+        {"name": "Potato Chips", "rate": 30.00, "category": "Snacks", "image_url": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400"},
+        {"name": "Mixed Nuts (250g)", "rate": 280.00, "category": "Snacks", "image_url": "https://images.unsplash.com/photo-1536591375352-6037fd3f5c66?w=400"},
+        {"name": "Chocolate Bar", "rate": 50.00, "category": "Snacks", "image_url": "https://images.unsplash.com/photo-1511381939415-e44015466834?w=400"},
+        # Essentials
+        {"name": "Rice (5kg)", "rate": 350.00, "category": "Essentials", "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"},
+        {"name": "Cooking Oil (1L)", "rate": 180.00, "category": "Essentials", "image_url": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400"},
+        {"name": "Salt (1kg)", "rate": 25.00, "category": "Essentials", "image_url": "https://images.unsplash.com/photo-1518110925495-5fe2fda0442c?w=400"},
+        {"name": "Sugar (1kg)", "rate": 45.00, "category": "Essentials", "image_url": "https://images.unsplash.com/photo-1581268955317-b68b6f23ef26?w=400"},
+    ]
+    
+    for item in sample_items:
+        item_doc = {
+            "item_id": f"item_{uuid.uuid4().hex[:12]}",
+            "name": item["name"],
+            "rate": item["rate"],
+            "image_url": item["image_url"],
+            "category": item["category"],
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.items.insert_one(item_doc)
+    
+    return {"message": f"Successfully seeded {len(sample_items)} items"}
+
+# Get categories endpoint
+@api_router.get("/categories")
+async def get_categories():
+    categories = await db.items.distinct("category")
+    return categories
+
 # Orders endpoints
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate, request: Request, session_token: Optional[str] = Cookie(None)):
