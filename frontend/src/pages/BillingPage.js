@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Menu, Plus, Minus, Trash2, Search, LogOut, User, ShoppingBag, Info, LayoutDashboard, Phone, MapPin, X, Pencil } from 'lucide-react';
+import { Menu, Plus, Trash2, Search, LogOut, User, ShoppingBag, Info, LayoutDashboard, Phone, MapPin, X, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
