@@ -133,11 +133,6 @@ const BillingPage = ({ user: initialUser }) => {
     setSearchQuery('');
     setSelectedCategory('All');
     toast.success(`${item.name} added to bill`);
-    
-    setTimeout(() => {
-      const input = document.querySelector(`input[data-testid="qty-input-${billingRows.length}"]`);
-      if (input) input.focus();
-    }, 100);
   };
 
   const updateQuantity = (id, value) => {
