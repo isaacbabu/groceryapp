@@ -43,7 +43,7 @@ const BillingPage = ({ user: initialUser }) => {
   const closeItemModal = () => {
     setSearchParams({});
     setSearchQuery('');
-    setSelectedCategory('All');
+    setSelectedCategory('Rice');
   };
 
   const fetchItems = async () => {
