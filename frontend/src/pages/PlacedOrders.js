@@ -47,6 +47,18 @@ const PlacedOrders = () => {
     }
   };
 
+  const handleEditOrder = (order) => {
+    // Navigate to billing page with order data for editing
+    navigate('/', { 
+      state: { 
+        editOrder: {
+          order_id: order.order_id,
+          items: order.items
+        }
+      } 
+    });
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-zinc-50">
