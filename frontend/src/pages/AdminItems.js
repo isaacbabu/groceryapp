@@ -167,6 +167,12 @@ const AdminItems = ({ user }) => {
     setFormData({ name: '', rate: '', image_url: '', category: categories[0] || '' });
   };
 
+  const handleOpenAddModal = () => {
+    setEditingItem(null);
+    setFormData({ name: '', rate: '', image_url: '', category: categories[0] || '' });
+    setShowModal(true);
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-zinc-50">
