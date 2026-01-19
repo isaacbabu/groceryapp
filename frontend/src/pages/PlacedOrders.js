@@ -153,14 +153,24 @@ const PlacedOrders = () => {
                   </table>
 
                   <div className="mt-6 flex items-center justify-between">
-                    <Button
-                      data-testid={`delete-order-btn-${order.order_id}`}
-                      onClick={() => setDeleteOrderId(order.order_id)}
-                      variant="outline"
-                      className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        data-testid={`edit-order-btn-${order.order_id}`}
+                        onClick={() => handleEditOrder(order)}
+                        variant="outline"
+                        className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary"
+                      >
+                        <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                      </Button>
+                      <Button
+                        data-testid={`delete-order-btn-${order.order_id}`}
+                        onClick={() => setDeleteOrderId(order.order_id)}
+                        variant="outline"
+                        className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                      </Button>
+                    </div>
                     <div className="text-right">
                       <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1 font-primary">Grand Total</p>
                       <p className="text-3xl font-mono font-bold text-emerald-950 tracking-tighter" data-testid={`order-total-${order.order_id}`}>₹{order.grand_total.toFixed(2)}</p>
