@@ -152,29 +152,32 @@ const PlacedOrders = () => {
                     </tbody>
                   </table>
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <div className="flex gap-2">
-                      <Button
-                        data-testid={`edit-order-btn-${order.order_id}`}
-                        onClick={() => handleEditOrder(order)}
-                        variant="outline"
-                        className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary"
-                      >
-                        <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                      </Button>
-                      <Button
-                        data-testid={`delete-order-btn-${order.order_id}`}
-                        onClick={() => setDeleteOrderId(order.order_id)}
-                        variant="outline"
-                        className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                      </Button>
-                    </div>
+                  {/* Grand Total - Below the table */}
+                  <div className="mt-4 pt-4 border-t border-zinc-200 flex justify-end">
                     <div className="text-right">
                       <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1 font-primary">Grand Total</p>
                       <p className="text-3xl font-mono font-bold text-emerald-950 tracking-tighter" data-testid={`order-total-${order.order_id}`}>₹{order.grand_total.toFixed(2)}</p>
                     </div>
+                  </div>
+
+                  {/* Action Buttons - At the bottom */}
+                  <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-center gap-3">
+                    <Button
+                      data-testid={`edit-order-btn-${order.order_id}`}
+                      onClick={() => handleEditOrder(order)}
+                      variant="outline"
+                      className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary"
+                    >
+                      <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                    </Button>
+                    <Button
+                      data-testid={`delete-order-btn-${order.order_id}`}
+                      onClick={() => setDeleteOrderId(order.order_id)}
+                      variant="outline"
+                      className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                    </Button>
                   </div>
                 </div>
               </div>
