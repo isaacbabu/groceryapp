@@ -188,10 +188,10 @@ const BillingPage = ({ user: initialUser }) => {
     if (parts.length > 2) {
       sanitized = parts[0] + '.' + parts.slice(1).join('');
     }
-    // Limit to reasonable quantity (max 10000)
+    // Parse for calculation but keep string for display to allow typing decimals
     const qty = Math.min(parseFloat(sanitized) || 0, 10000);
     setBillingRows(billingRows.map(row => 
-      row.id === id ? { ...row, quantity: qty === 0 ? '' : qty, total: parseFloat((row.rate * qty).toFixed(2)) } : row
+      row.id === id ? { ...row, quantity: sanitized === '' ? '' : sanitized, total: parseFloat((row.rate * qty).toFixed(2)) } : row
     ));
   };
 
