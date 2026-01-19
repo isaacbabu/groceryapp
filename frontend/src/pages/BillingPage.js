@@ -65,7 +65,23 @@ const BillingPage = ({ user: initialUser }) => {
   const fetchCategories = async () => {
     try {
       const response = await axiosInstance.get('/categories');
-      setCategories(response.data);
+      const cats = response.data;
+      
+      // Sort categories: Rice first, All last, others alphabetically
+      const sortedCategories = cats.sort((a, b) => {
+        if (a === 'Rice') return -1;
+        if (b === 'Rice') return 1;
+        if (a === 'All') return 1;
+        if (b === 'All') return -1;
+        return a.localeCompare(b);
+      });
+      
+      // Add 'All' at the end if not already present
+      if (!sortedCategories.includes('All')) {
+        sortedCategories.push('All');
+      }
+      
+      setCategories(sortedCategories);
     } catch (error) {
       console.error('Failed to load categories');
     }
