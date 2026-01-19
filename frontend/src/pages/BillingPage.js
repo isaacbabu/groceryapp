@@ -444,9 +444,9 @@ const BillingPage = ({ user: initialUser }) => {
           <Button
             data-testid="place-order-btn"
             onClick={placeOrder}
-            className="bg-lime-400 hover:bg-lime-500 text-lime-950 h-12 md:h-14 px-4 md:px-8 text-sm md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0"
+            className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-4 md:px-8 text-sm md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}
           >
-            Place Order
+            {editMode ? 'Update Order' : 'Place Order'}
           </Button>
         </div>
         </div>
