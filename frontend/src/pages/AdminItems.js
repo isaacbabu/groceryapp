@@ -211,7 +211,7 @@ const AdminItems = ({ user }) => {
           </div>
           <Button
             data-testid="add-item-btn"
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenAddModal}
             className="bg-lime-400 hover:bg-lime-500 text-lime-950 font-secondary font-bold"
           >
             <Plus className="mr-2 h-4 w-4" /> Add Item
