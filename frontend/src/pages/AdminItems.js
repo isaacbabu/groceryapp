@@ -177,8 +177,12 @@ const AdminItems = ({ user }) => {
   };
 
   const handleOpenAddModal = () => {
+    if (categories.length === 0) {
+      toast.error('Please wait for categories to load');
+      return;
+    }
     setEditingItem(null);
-    setFormData({ name: '', rate: '', image_url: '', category: categories[0] || '' });
+    setFormData({ name: '', rate: '', image_url: '', category: categories[0] });
     setShowModal(true);
   };
 
