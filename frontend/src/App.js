@@ -12,6 +12,7 @@ import PlacedOrders from '@/pages/PlacedOrders';
 import AboutPage from '@/pages/AboutPage';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminItems from '@/pages/AdminItems';
+import AdminCategories from '@/pages/AdminCategories';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
