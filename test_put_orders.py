@@ -237,30 +237,17 @@ class OrderUpdateTester:
         print(f"Backend URL: {self.base_url}")
         print(f"Test started at: {datetime.now()}")
         
-        # Try to create a session
-        session_created = self.create_test_session()
+        # Use existing session token
+        print(f"🔐 Using existing session token: {self.session_token}")
         
-        if session_created:
-            # Run full authenticated test
-            success = self.test_orders_endpoint_with_session()
-            if success:
-                print("\n🎉 PUT /api/orders/{order_id} endpoint test PASSED!")
-                return True
-            else:
-                print("\n❌ PUT /api/orders/{order_id} endpoint test FAILED!")
-                return False
+        # Run full authenticated test
+        success = self.test_orders_endpoint_with_session()
+        if success:
+            print("\n🎉 PUT /api/orders/{order_id} endpoint test PASSED!")
+            return True
         else:
-            # Run basic endpoint structure test
-            print("\n⚠️  Could not create session, testing endpoint structure only...")
-            endpoint_exists = self.test_with_direct_database_insert()
-            
-            if endpoint_exists:
-                print("\n✅ PUT /api/orders/{order_id} endpoint exists and requires auth (as expected)")
-                print("⚠️  Full functionality test requires valid authentication")
-                return True
-            else:
-                print("\n❌ PUT /api/orders/{order_id} endpoint has issues")
-                return False
+            print("\n❌ PUT /api/orders/{order_id} endpoint test FAILED!")
+            return False
 
 def main():
     tester = OrderUpdateTester()
