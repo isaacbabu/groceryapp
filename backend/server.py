@@ -116,7 +116,7 @@ class Item(BaseModel):
 class ItemCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     rate: float = Field(..., gt=0, le=MAX_RATE)
-    image_url: str = Field(..., min_length=1, max_length=2000)
+    image_url: str = Field(..., min_length=1, max_length=5000000)  # Allow large base64 images (up to ~3.5MB)
     category: str = Field(..., min_length=1, max_length=100)
     
     @field_validator('name', 'category')
@@ -127,7 +127,7 @@ class ItemCreate(BaseModel):
     @field_validator('image_url')
     @classmethod
     def validate_image_url(cls, v):
-        v = str(v).strip()[:2000]
+        v = str(v).strip()
         # Allow data URLs (base64) and http/https URLs
         if not (v.startswith('http://') or v.startswith('https://') or v.startswith('data:image/')):
             raise ValueError('Invalid image URL format')
