@@ -100,13 +100,23 @@ const AdminDashboard = ({ user }) => {
             <h1 className="text-3xl font-bold font-primary text-emerald-950 tracking-tight">Admin Dashboard</h1>
             <p className="text-sm text-zinc-500 font-secondary mt-1">All orders from all users</p>
           </div>
-          <Button
-            data-testid="manage-items-btn"
-            onClick={() => navigate('/admin/items')}
-            className="bg-emerald-900 hover:bg-emerald-950 font-secondary"
-          >
-            Manage Items
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              data-testid="manage-categories-btn"
+              onClick={() => navigate('/admin/categories')}
+              variant="outline"
+              className="bg-white hover:bg-zinc-50 text-emerald-900 border-emerald-200 font-secondary"
+            >
+              Manage Categories
+            </Button>
+            <Button
+              data-testid="manage-items-btn"
+              onClick={() => navigate('/admin/items')}
+              className="bg-emerald-900 hover:bg-emerald-950 font-secondary"
+            >
+              Manage Items
+            </Button>
+          </div>
         </div>
 
         {orders.length === 0 ? (
