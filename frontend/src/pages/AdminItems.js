@@ -108,20 +108,28 @@ const AdminItems = ({ user }) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.rate || !formData.image_url || !formData.category) {
-      toast.error('All fields are required');
+    // Validate all required fields
+    const missingFields = [];
+    if (!formData.name) missingFields.push('Item Name');
+    if (!formData.rate) missingFields.push('Rate');
+    if (!formData.image_url) missingFields.push('Image');
+    if (!formData.category) missingFields.push('Category');
+    
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in: ${missingFields.join(', ')}`);
       console.error('Missing fields:', { 
         name: !!formData.name, 
         rate: !!formData.rate, 
         image_url: !!formData.image_url, 
-        category: !!formData.category 
+        category: !!formData.category,
+        categoryValue: formData.category
       });
       return;
     }
 
     // Prepare payload with proper types
     const payload = {
-      name: formData.name,
+      name: formData.name.trim(),
       rate: parseFloat(formData.rate),
       image_url: formData.image_url,
       category: formData.category
@@ -144,7 +152,12 @@ const AdminItems = ({ user }) => {
       fetchItems();
     } catch (error) {
       console.error('Failed to add/update item:', error.response?.data || error.message);
-      toast.error(editingItem ? 'Failed to update item' : 'Failed to add item');
+      const errorDetail = error.response?.data?.detail;
+      if (Array.isArray(errorDetail) && errorDetail.length > 0) {
+        toast.error(`Validation error: ${errorDetail[0].msg}`);
+      } else {
+        toast.error(editingItem ? 'Failed to update item' : 'Failed to add item');
+      }
     }
   };
 
