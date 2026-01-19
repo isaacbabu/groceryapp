@@ -63,7 +63,7 @@ const PlacedOrders = () => {
       {/* Header */}
       <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
+          <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Supermarket</h1>
           <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
         </div>
       </div>

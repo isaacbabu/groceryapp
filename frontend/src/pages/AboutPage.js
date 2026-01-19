@@ -11,7 +11,7 @@ const AboutPage = () => {
       {/* Header */}
       <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
+          <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Supermarket</h1>
           <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
         </div>
       </div>
@@ -34,7 +34,7 @@ const AboutPage = () => {
             <div className="w-16 h-16 bg-lime-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <Info className="h-8 w-8 text-lime-950" />
             </div>
-            <h1 className="text-3xl font-bold font-primary text-white">Emmanuel Agencies</h1>
+            <h1 className="text-3xl font-bold font-primary text-white">Emmanuel Supermarket</h1>
             <p className="text-emerald-100 font-secondary mt-2 text-lg">Online Grocery Shopping</p>
           </div>
 
@@ -49,7 +49,7 @@ const AboutPage = () => {
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold font-primary text-emerald-950 mb-4">Welcome to Emmanuel Agencies</h2>
+              <h2 className="text-2xl font-bold font-primary text-emerald-950 mb-4">Welcome to Emmanuel Supermarket</h2>
               <p className="text-zinc-600 font-secondary leading-relaxed">
                 A professional online ordering platform designed specifically for grocery stores. Our platform combines 
                 the precision of traditional accounting software with modern, user-friendly design to make your shopping experience seamless.

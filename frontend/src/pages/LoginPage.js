@@ -17,7 +17,7 @@ const LoginPage = () => {
       <div className="text-center space-y-8 max-w-md px-4">
         <div>
           <h1 className="text-4xl md:text-5xl font-bold font-primary text-emerald-950 tracking-tight mb-2">
-            Emmanuel Agencies
+            Emmanuel Supermarket
           </h1>
           <p className="text-xl text-emerald-800 font-secondary font-medium mb-3">
             Online Grocery Shopping

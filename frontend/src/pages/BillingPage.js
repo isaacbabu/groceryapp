@@ -280,7 +280,7 @@ const BillingPage = ({ user: initialUser }) => {
                   </Button>
                 </SheetTrigger>
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Agencies</h1>
+                  <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Supermarket</h1>
                   <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
                 </div>
               </div>
