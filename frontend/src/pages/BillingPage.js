@@ -492,7 +492,7 @@ const BillingPage = ({ user: initialUser }) => {
         </div>
 
       {/* Item Selection Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
+      <Dialog open={showModal} onOpenChange={(open) => !open && closeItemModal()}>
         <DialogContent 
           className="bg-white border-none shadow-2xl sm:max-w-[800px] p-0 overflow-hidden rounded-2xl"
           onOpenAutoFocus={(e) => e.preventDefault()}
