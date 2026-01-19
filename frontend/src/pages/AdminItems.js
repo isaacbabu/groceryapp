@@ -217,48 +217,58 @@ const AdminItems = ({ user }) => {
             </Button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {items.map((item) => (
-              <div key={item.item_id} data-testid={`item-card-${item.item_id}`} className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden group hover:shadow-lg transition-all">
-                <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100">
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-4">
-                  <div className="mb-2">
-                    <span className="inline-block px-2 py-1 text-xs font-medium bg-zinc-100 text-zinc-700 rounded font-secondary">
-                      {item.category}
-                    </span>
+          <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="divide-y divide-zinc-100">
+              {items.map((item) => (
+                <div 
+                  key={item.item_id} 
+                  data-testid={`item-card-${item.item_id}`} 
+                  className="flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors"
+                >
+                  {/* Item Image */}
+                  <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-100">
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                  <h3 className="font-primary font-bold text-zinc-900 mb-1">{item.name}</h3>
-                  <p className="font-mono text-emerald-700 font-medium text-lg">₹{item.rate.toFixed(2)}</p>
                   
-                  <div className="mt-4 flex gap-2">
+                  {/* Item Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-primary font-bold text-zinc-900 truncate">{item.name}</h3>
+                      <span className="inline-block px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-600 rounded font-secondary flex-shrink-0">
+                        {item.category}
+                      </span>
+                    </div>
+                    <p className="font-mono text-emerald-700 font-medium">₹{item.rate.toFixed(2)}</p>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       data-testid={`edit-item-btn-${item.item_id}`}
                       onClick={() => handleEdit(item)}
                       variant="outline"
                       size="sm"
-                      className="flex-1 font-secondary"
+                      className="font-secondary"
                     >
-                      <Edit className="mr-1 h-3 w-3" /> Edit
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       data-testid={`delete-item-btn-${item.item_id}`}
                       onClick={() => setDeleteItemId(item.item_id)}
                       variant="outline"
                       size="sm"
-                      className="flex-1 text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
+                      className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
                     >
-                      <Trash2 className="mr-1 h-3 w-3" /> Delete
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
         </div>
