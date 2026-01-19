@@ -140,10 +140,12 @@ const BillingPage = ({ user: initialUser }) => {
     }, 100);
   };
 
-  const updateQuantity = (id, quantity) => {
+  const updateQuantity = (id, value) => {
+    // Remove leading zeros and parse the quantity
+    let quantity = value.replace(/^0+(?=\d)/, ''); // Remove leading zeros except for "0" or "0.x"
     const qty = parseFloat(quantity) || 0;
     setBillingRows(billingRows.map(row => 
-      row.id === id ? { ...row, quantity: qty, total: row.rate * qty } : row
+      row.id === id ? { ...row, quantity: qty === 0 ? '' : qty, total: row.rate * qty } : row
     ));
   };
 
