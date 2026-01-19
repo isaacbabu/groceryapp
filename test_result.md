@@ -278,3 +278,5 @@ agent_communication:
     message: "✅ BACKEND TESTING COMPLETE - All 6 new endpoints working perfectly! Fixed ObjectId serialization bug in PUT /api/cart during testing. Created test session for auth testing. All endpoints tested with proper data flow: seed-items → items → categories → cart operations. Ready for frontend testing or final summary."
   - agent: "main"
     message: "Added Edit Order feature. New PUT /api/orders/{order_id} endpoint for updating orders. PlacedOrders.js has new Edit Order button. BillingPage.js handles edit mode with visual indicator. Please test the new PUT endpoint."
+  - agent: "testing"
+    message: "✅ PUT /api/orders/{order_id} ENDPOINT TESTED SUCCESSFULLY! Comprehensive test completed: Created order with 1 item (Toor Dal, qty 2, total 300.0) → Updated to 2 items (Toor Dal qty 1 + Moong Dal qty 3, total 570.0) → Verified status reset to 'Pending' → Confirmed persistence in database. Authentication working correctly. All backend endpoints now fully tested and working."
