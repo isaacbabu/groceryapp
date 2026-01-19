@@ -184,17 +184,26 @@ const BillingPage = ({ user: initialUser }) => {
 
     setSavingProfile(true);
     try {
-      // Save profile
+      // Save profile with sanitized inputs
       const profileResponse = await axiosInstance.put('/user/profile', {
-        phone_number: phoneNumber,
-        home_address: homeAddress,
+        phone_number: cleanPhone,
+        home_address: cleanAddress,
       });
       setUser(profileResponse.data);
       
-      // Now place the order
+      // Prepare sanitized order items
+      const sanitizedItems = billingRows.map(row => ({
+        item_id: sanitizeInput(row.item_id, 50),
+        item_name: sanitizeInput(row.item_name, 200),
+        rate: parseFloat(row.rate) || 0,
+        quantity: parseFloat(row.quantity) || 0,
+        total: parseFloat((row.rate * row.quantity).toFixed(2)) || 0
+      }));
+      
+      // Now place the order with sanitized data
       await axiosInstance.post('/orders', {
-        items: billingRows,
-        grand_total: grandTotal,
+        items: sanitizedItems,
+        grand_total: parseFloat(grandTotal.toFixed(2)),
       });
       
       toast.success('Order placed successfully!');
@@ -205,7 +214,7 @@ const BillingPage = ({ user: initialUser }) => {
       setPhoneNumber('');
       setHomeAddress('');
     } catch (error) {
-      toast.error('Failed to place order');
+      toast.error(error.response?.data?.detail || 'Failed to place order');
     } finally {
       setSavingProfile(false);
     }
