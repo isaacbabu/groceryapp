@@ -141,11 +141,19 @@ const BillingPage = ({ user: initialUser }) => {
   };
 
   const updateQuantity = (id, value) => {
-    // Remove leading zeros and parse the quantity
-    let quantity = value.replace(/^0+(?=\d)/, ''); // Remove leading zeros except for "0" or "0.x"
-    const qty = parseFloat(quantity) || 0;
+    // Sanitize input - only allow numbers and decimal point
+    let sanitized = value.replace(/[^0-9.]/g, '');
+    // Remove leading zeros except for "0" or "0.x"
+    sanitized = sanitized.replace(/^0+(?=\d)/, '');
+    // Prevent multiple decimal points
+    const parts = sanitized.split('.');
+    if (parts.length > 2) {
+      sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+    // Limit to reasonable quantity (max 10000)
+    const qty = Math.min(parseFloat(sanitized) || 0, 10000);
     setBillingRows(billingRows.map(row => 
-      row.id === id ? { ...row, quantity: qty === 0 ? '' : qty, total: row.rate * qty } : row
+      row.id === id ? { ...row, quantity: qty === 0 ? '' : qty, total: parseFloat((row.rate * qty).toFixed(2)) } : row
     ));
   };
 
@@ -154,9 +162,23 @@ const BillingPage = ({ user: initialUser }) => {
     toast.success('Item removed from bill');
   };
 
+  // Sanitize text input
+  const sanitizeInput = (text, maxLength = 500) => {
+    if (!text) return '';
+    return text.toString().trim().slice(0, maxLength);
+  };
+
   const handleSaveProfileAndOrder = async () => {
-    if (!phoneNumber || !homeAddress) {
-      toast.error('Phone number and address are required');
+    // Validate and sanitize inputs
+    const cleanPhone = sanitizeInput(phoneNumber, 20);
+    const cleanAddress = sanitizeInput(homeAddress, 1000);
+    
+    if (!cleanPhone || cleanPhone.length < 7) {
+      toast.error('Please enter a valid phone number (minimum 7 digits)');
+      return;
+    }
+    if (!cleanAddress || cleanAddress.length < 5) {
+      toast.error('Please enter a valid address (minimum 5 characters)');
       return;
     }
 
