@@ -226,13 +226,23 @@ const BillingPage = ({ user: initialUser }) => {
         total: parseFloat((row.rate * row.quantity).toFixed(2)) || 0
       }));
       
-      // Now place the order with sanitized data
-      await axiosInstance.post('/orders', {
-        items: sanitizedItems,
-        grand_total: parseFloat(grandTotal.toFixed(2)),
-      });
+      // Place or update order with sanitized data
+      if (editMode && editOrderId) {
+        await axiosInstance.put(`/orders/${editOrderId}`, {
+          items: sanitizedItems,
+          grand_total: parseFloat(grandTotal.toFixed(2)),
+        });
+        toast.success('Order updated successfully!');
+        setEditMode(false);
+        setEditOrderId(null);
+      } else {
+        await axiosInstance.post('/orders', {
+          items: sanitizedItems,
+          grand_total: parseFloat(grandTotal.toFixed(2)),
+        });
+        toast.success('Order placed successfully!');
+      }
       
-      toast.success('Order placed successfully!');
       setBillingRows([]);
       setGrandTotal(0);
       await clearCart();
@@ -240,7 +250,7 @@ const BillingPage = ({ user: initialUser }) => {
       setPhoneNumber('');
       setHomeAddress('');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to place order');
+      toast.error(error.response?.data?.detail || (editMode ? 'Failed to update order' : 'Failed to place order'));
     } finally {
       setSavingProfile(false);
     }
