@@ -39,6 +39,7 @@ function AppRouter() {
       <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/items" element={<ProtectedRoute><AdminItems /></ProtectedRoute>} />
+      <Route path="/admin/categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
     </Routes>
   );
 }
