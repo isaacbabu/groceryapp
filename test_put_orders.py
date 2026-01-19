@@ -12,7 +12,8 @@ from datetime import datetime
 class OrderUpdateTester:
     def __init__(self, base_url="https://preview-launch-18.preview.emergentagent.com/api"):
         self.base_url = base_url
-        self.session_token = None
+        # Use an existing valid session token from the database
+        self.session_token = "VvTXKh0ayhN0giG652296EcNgnPdNWTrkI_pLKFDieY"
         self.test_order_id = None
         
     def create_test_session(self):
