@@ -266,7 +266,7 @@ const HomePage = ({ user: initialUser }) => {
                                   <Button
                                     onClick={() => addToCart(item)}
                                     disabled={addingItems.has(item.item_id) || addedItems.has(item.item_id)}
-                                    className={`font-secondary w-full sm:w-auto text-xs md:text-sm ${
+                                    className={`font-secondary w-full sm:w-auto text-xs md:text-sm px-2 md:px-4 ${
                                       addedItems.has(item.item_id)
                                         ? 'bg-green-600 hover:bg-green-600'
                                         : 'bg-emerald-600 hover:bg-emerald-700'
@@ -276,19 +276,17 @@ const HomePage = ({ user: initialUser }) => {
                                     {addingItems.has(item.item_id) ? (
                                       <>
                                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                        <span className="hidden sm:inline">Adding...</span>
+                                        Adding
                                       </>
                                     ) : addedItems.has(item.item_id) ? (
                                       <>
                                         <Check className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                        <span className="hidden sm:inline">Added</span>
-                                        <Check className="h-3 w-3 sm:hidden" />
+                                        Added
                                       </>
                                     ) : (
                                       <>
                                         <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                        <span className="hidden sm:inline">Add</span>
-                                        <Plus className="h-3 w-3 sm:hidden" />
+                                        Add
                                       </>
                                     )}
                                   </Button>
