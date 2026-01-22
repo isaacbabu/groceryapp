@@ -14,6 +14,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import requests
+import asyncio
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,6 +26,43 @@ logger = logging.getLogger(__name__)
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url, maxPoolSize=50, minPoolSize=10)
 db = client[os.environ['DB_NAME']]
+
+# Simple in-memory cache with TTL
+class SimpleCache:
+    def __init__(self):
+        self.cache = {}
+        self.timestamps = {}
+    
+    def get(self, key: str, ttl_seconds: int = 300):
+        """Get cached value if it exists and hasn't expired"""
+        if key in self.cache:
+            # Check if cache is still valid
+            if datetime.now().timestamp() - self.timestamps[key] < ttl_seconds:
+                return self.cache[key]
+            else:
+                # Cache expired, remove it
+                del self.cache[key]
+                del self.timestamps[key]
+        return None
+    
+    def set(self, key: str, value):
+        """Set cache value with current timestamp"""
+        self.cache[key] = value
+        self.timestamps[key] = datetime.now().timestamp()
+    
+    def invalidate(self, key: str):
+        """Invalidate specific cache key"""
+        if key in self.cache:
+            del self.cache[key]
+            del self.timestamps[key]
+    
+    def clear(self):
+        """Clear all cache"""
+        self.cache.clear()
+        self.timestamps.clear()
+
+# Initialize cache
+cache = SimpleCache()
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
