@@ -439,6 +439,11 @@ async def create_item(item: ItemCreate, request: Request, session_token: Optiona
     }
     
     await db.items.insert_one(item_doc)
+    
+    # Invalidate items and categories cache
+    cache.clear()
+    logger.info("Cache cleared after adding new item")
+    
     return Item(**item_doc)
 
 @api_router.put("/admin/items/{item_id}", response_model=Item)
