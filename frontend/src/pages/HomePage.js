@@ -27,13 +27,14 @@ const HomePage = ({ user: initialUser }) => {
 
   const fetchItems = async () => {
     try {
-      const response = await axiosInstance.get('/items');
+      // Fetch all items with higher limit (500 max from backend)
+      const response = await axiosInstance.get('/items?limit=500');
       setItems(response.data);
       
       // If no items, seed sample items
       if (response.data.length === 0) {
         await axiosInstance.post('/seed-items');
-        const newResponse = await axiosInstance.get('/items');
+        const newResponse = await axiosInstance.get('/items?limit=500');
         setItems(newResponse.data);
       }
     } catch (error) {
