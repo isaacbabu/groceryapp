@@ -392,7 +392,7 @@ const HomePage = ({ user: initialUser }) => {
                                       <Button
                                         onClick={() => addToCart(item)}
                                         disabled={addingItems.has(item.item_id)}
-                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                                        className="font-secondary text-xs px-2 bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
                                         size="sm"
                                       >
                                         {addingItems.has(item.item_id) ? (
@@ -402,7 +402,6 @@ const HomePage = ({ user: initialUser }) => {
                                           </>
                                         ) : (
                                           <>
-                                            <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                                             Add {getItemQuantity(item.item_id)}
                                           </>
                                         )}
