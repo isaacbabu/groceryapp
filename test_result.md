@@ -307,6 +307,18 @@ frontend:
         agent: "main"
         comment: "Added pagination support to GET /api/items endpoint with page and limit parameters (default limit=100, max=500). Frontend updated to fetch items with limit=500 for now. Simple implementation without UI changes."
 
+  - task: "Response caching for items and categories"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented simple in-memory cache with 5-minute TTL for GET /api/items and GET /api/categories endpoints. Cache automatically invalidates when items/categories are added, updated, or deleted. Backend tested and running successfully."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
