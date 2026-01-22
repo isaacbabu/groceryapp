@@ -14,6 +14,7 @@ const HomePage = ({ user: initialUser }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addingItems, setAddingItems] = useState(new Set());
+  const [addedItems, setAddedItems] = useState(new Set());
 
   useEffect(() => {
     fetchItems();
