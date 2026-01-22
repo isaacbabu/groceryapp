@@ -259,6 +259,30 @@ frontend:
         agent: "main"
         comment: "Modal appears when placing order without profile data"
 
+  - task: "Home page with category-organized items"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created new HomePage displaying items by categories with Add to Cart functionality. Each item card shows image, name, price, category and an Add button. Adds items to cart via API with quantity increment for existing items."
+
+  - task: "Navigation restructure - Home and Your Order menu items"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/BillingPage.js, frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated burger menu to include 'Home' (navigates to /) and 'Your Order' (navigates to /your-order). Restructured routing: / now shows HomePage (shopping), /your-order shows BillingPage (cart/checkout)."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
