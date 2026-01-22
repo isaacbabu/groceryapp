@@ -302,6 +302,15 @@ const HomePage = ({ user: initialUser }) => {
                       </div>
                     );
                   })}
+                  
+                  {/* No Results Message */}
+                  {searchQuery.trim() && filteredItems.length === 0 && (
+                    <div className="text-center py-20">
+                      <Search className="h-16 w-16 text-zinc-300 mx-auto mb-4" />
+                      <p className="text-zinc-600 font-secondary text-lg mb-2">No items found</p>
+                      <p className="text-zinc-500 font-secondary text-sm">Try searching with different keywords</p>
+                    </div>
+                  )}
                 </div>
               )}
 
