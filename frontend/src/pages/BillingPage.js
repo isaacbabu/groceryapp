@@ -355,6 +355,12 @@ const BillingPage = ({ user: initialUser }) => {
             <SheetTitle className="font-primary text-xl font-bold text-emerald-950">Menu</SheetTitle>
           </SheetHeader>
           <nav className="p-4 space-y-2">
+            <Button data-testid="nav-home-btn" onClick={() => navigate('/')} variant="ghost" className="w-full justify-start font-secondary">
+              <ShoppingCart className="mr-2 h-4 w-4" /> Home
+            </Button>
+            <Button data-testid="nav-your-order-btn" onClick={() => navigate('/your-order')} variant="ghost" className="w-full justify-start font-secondary bg-emerald-50 text-emerald-700">
+              <ShoppingBag className="mr-2 h-4 w-4" /> Your Order
+            </Button>
             <Button data-testid="nav-profile-btn" onClick={() => navigate('/profile')} variant="ghost" className="w-full justify-start font-secondary">
               <User className="mr-2 h-4 w-4" /> User Profile
             </Button>
