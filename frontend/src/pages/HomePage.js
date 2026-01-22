@@ -233,18 +233,19 @@ const HomePage = ({ user: initialUser }) => {
                           <Badge variant="secondary" className="font-secondary">{categoryItems.length} items</Badge>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                           {categoryItems.map(item => (
                             <div 
                               key={item.item_id} 
                               className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
                             >
                               {/* Item Image */}
-                              <div className="h-48 bg-zinc-100 overflow-hidden">
+                              <div className="h-32 md:h-48 bg-zinc-100 overflow-hidden">
                                 <img 
                                   src={item.image_url} 
                                   alt={item.name}
                                   className="w-full h-full object-cover"
+                                  loading="lazy"
                                   onError={(e) => {
                                     e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop';
                                   }}
@@ -252,20 +253,20 @@ const HomePage = ({ user: initialUser }) => {
                               </div>
                               
                               {/* Item Details */}
-                              <div className="p-4">
-                                <h4 className="font-primary font-bold text-emerald-950 text-lg mb-1 truncate">{item.name}</h4>
-                                <p className="text-sm text-zinc-500 font-secondary mb-3">{item.category}</p>
+                              <div className="p-2 md:p-4">
+                                <h4 className="font-primary font-bold text-emerald-950 text-sm md:text-lg mb-0.5 md:mb-1 truncate">{item.name}</h4>
+                                <p className="text-xs text-zinc-500 font-secondary mb-2 md:mb-3 hidden sm:block">{item.category}</p>
                                 
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                   <div>
-                                    <p className="text-xs text-zinc-500 font-secondary">Price</p>
-                                    <p className="text-xl font-bold text-emerald-600 font-primary">₹{item.rate}</p>
+                                    <p className="text-xs text-zinc-500 font-secondary hidden sm:block">Price</p>
+                                    <p className="text-base md:text-xl font-bold text-emerald-600 font-primary">₹{item.rate}</p>
                                   </div>
                                   
                                   <Button
                                     onClick={() => addToCart(item)}
                                     disabled={addingItems.has(item.item_id) || addedItems.has(item.item_id)}
-                                    className={`font-secondary ${
+                                    className={`font-secondary w-full sm:w-auto text-xs md:text-sm ${
                                       addedItems.has(item.item_id)
                                         ? 'bg-green-600 hover:bg-green-600'
                                         : 'bg-emerald-600 hover:bg-emerald-700'
@@ -274,18 +275,20 @@ const HomePage = ({ user: initialUser }) => {
                                   >
                                     {addingItems.has(item.item_id) ? (
                                       <>
-                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                                        Adding...
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                        <span className="hidden sm:inline">Adding...</span>
                                       </>
                                     ) : addedItems.has(item.item_id) ? (
                                       <>
-                                        <Check className="h-4 w-4 mr-1" />
-                                        Added
+                                        <Check className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                        <span className="hidden sm:inline">Added</span>
+                                        <Check className="h-3 w-3 sm:hidden" />
                                       </>
                                     ) : (
                                       <>
-                                        <Plus className="h-4 w-4 mr-1" />
-                                        Add
+                                        <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                        <span className="hidden sm:inline">Add</span>
+                                        <Plus className="h-3 w-3 sm:hidden" />
                                       </>
                                     )}
                                   </Button>
