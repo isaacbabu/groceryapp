@@ -504,33 +504,33 @@ const BillingPage = ({ user: initialUser }) => {
             </table>
           </div>
 
-          <div className="mt-4 flex justify-center">
+          {/* Add More Items Button */}
+          <div className="mt-4">
             <Button
               data-testid="add-item-btn"
               onClick={() => navigate('/')}
               variant="outline"
-              size="icon"
-              className="h-12 w-12 rounded-full border-2 border-emerald-900 text-emerald-900 hover:bg-emerald-900 hover:text-white transition-all"
+              className="w-full h-12 border-2 border-emerald-900 text-emerald-900 hover:bg-emerald-50 transition-all font-secondary text-base"
             >
-              <Plus className="h-6 w-6" />
+              <Plus className="h-5 w-5 mr-2" />
+              Add More Items
             </Button>
           </div>
-        </div>
 
-        {/* Bottom Bar - Always visible, compact for mobile */}
-        <div className="h-16 md:h-24 bg-white border-t border-zinc-200 flex flex-row items-center justify-between px-3 md:px-8 gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-          <div className="flex flex-col items-start">
-            <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
-            <p className="text-xl md:text-5xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
+          {/* Grand Total and Place Order - Same Row */}
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="flex flex-col items-start">
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
+              <p className="text-3xl md:text-4xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
+            </div>
+            <Button
+              data-testid="place-order-btn"
+              onClick={placeOrder}
+              className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}
+            >
+              {editMode ? 'Update Order' : 'Place Order'}
+            </Button>
           </div>
-          <Button
-            data-testid="place-order-btn"
-            onClick={placeOrder}
-            className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-4 md:px-8 text-sm md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}
-          >
-            {editMode ? 'Update Order' : 'Place Order'}
-          </Button>
-        </div>
         </div>
 
       {/* Item Selection Modal */}
