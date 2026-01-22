@@ -469,6 +469,10 @@ async def update_item(item_id: str, item: ItemCreate, request: Request, session_
     if isinstance(updated_item['created_at'], str):
         updated_item['created_at'] = datetime.fromisoformat(updated_item['created_at'])
     
+    # Invalidate cache
+    cache.clear()
+    logger.info("Cache cleared after updating item")
+    
     return Item(**updated_item)
 
 @api_router.delete("/admin/items/{item_id}")
@@ -480,6 +484,10 @@ async def delete_item(item_id: str, request: Request, session_token: Optional[st
     result = await db.items.delete_one({"item_id": item_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Invalidate cache
+    cache.clear()
+    logger.info("Cache cleared after deleting item")
     
     return {"message": "Item deleted"}
 
