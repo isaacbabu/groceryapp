@@ -53,6 +53,43 @@ const HomePage = ({ user: initialUser }) => {
     }
   };
 
+  const loadCartItems = async () => {
+    try {
+      const response = await axiosInstance.get('/cart');
+      const cartItems = response.data.items || [];
+      
+      // Mark items that are in cart as added
+      const addedItemIds = new Set(cartItems.map(item => item.item_id));
+      setAddedItems(addedItemIds);
+    } catch (error) {
+      console.error('Failed to load cart items');
+    }
+  };
+
+  const increaseQuantity = (itemId) => {
+    setItemQuantities(prev => ({
+      ...prev,
+      [itemId]: (prev[itemId] || 1) + 1
+    }));
+  };
+
+  const decreaseQuantity = (itemId) => {
+    setItemQuantities(prev => {
+      const currentQty = prev[itemId] || 1;
+      if (currentQty > 1) {
+        return {
+          ...prev,
+          [itemId]: currentQty - 1
+        };
+      }
+      return prev;
+    });
+  };
+
+  const getItemQuantity = (itemId) => {
+    return itemQuantities[itemId] || 1;
+  };
+
   const addToCart = async (item) => {
     setAddingItems(prev => new Set([...prev, item.item_id]));
     
