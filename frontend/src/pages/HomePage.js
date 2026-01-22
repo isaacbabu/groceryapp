@@ -83,6 +83,19 @@ const HomePage = ({ user: initialUser }) => {
       // Save updated cart
       await axiosInstance.put('/cart', { items: updatedCart });
       toast.success(`${item.name} added to cart!`);
+      
+      // Mark item as added
+      setAddedItems(prev => new Set([...prev, item.item_id]));
+      
+      // Reset to "Add" after 2 seconds
+      setTimeout(() => {
+        setAddedItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(item.item_id);
+          return newSet;
+        });
+      }, 2000);
+      
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast.error('Failed to add item to cart');
