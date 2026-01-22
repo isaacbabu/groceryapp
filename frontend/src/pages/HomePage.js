@@ -111,12 +111,6 @@ const HomePage = ({ user: initialUser }) => {
     }
   };
 
-  // Group items by category
-  const itemsByCategory = categories.reduce((acc, category) => {
-    acc[category] = items.filter(item => item.category === category);
-    return acc;
-  }, {});
-
   // Filter items based on search query
   const filteredItems = searchQuery.trim() 
     ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
