@@ -15,6 +15,7 @@ const HomePage = ({ user: initialUser }) => {
   const [loading, setLoading] = useState(true);
   const [addingItems, setAddingItems] = useState(new Set());
   const [addedItems, setAddedItems] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchItems();
