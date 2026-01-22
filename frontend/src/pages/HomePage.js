@@ -336,79 +336,79 @@ const HomePage = ({ user: initialUser }) => {
                               
                               {/* Item Details */}
                               <div className="p-2 md:p-4">
-                                <div className="flex items-start justify-between gap-1 mb-1">
-                                  <h4 className="font-primary font-bold text-emerald-950 text-sm md:text-lg truncate flex-1">{item.name}</h4>
-                                  
-                                  {/* Quantity Controls - Only show when not in cart */}
-                                  {!addedItems.has(item.item_id) && (
-                                    <div className="flex items-center gap-0.5 bg-zinc-100 rounded px-1">
-                                      <button
-                                        onClick={() => decreaseQuantity(item.item_id)}
-                                        className="p-0.5 hover:bg-zinc-200 rounded"
-                                        disabled={getItemQuantity(item.item_id) <= 1}
-                                      >
-                                        <ChevronDown className="h-3 w-3 text-zinc-600" />
-                                      </button>
-                                      <span className="text-xs font-bold text-emerald-600 px-1 min-w-[20px] text-center">
-                                        {getItemQuantity(item.item_id)}
-                                      </span>
-                                      <button
-                                        onClick={() => increaseQuantity(item.item_id)}
-                                        className="p-0.5 hover:bg-zinc-200 rounded"
-                                      >
-                                        <ChevronUp className="h-3 w-3 text-zinc-600" />
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                                
+                                <h4 className="font-primary font-bold text-emerald-950 text-sm md:text-lg mb-0.5 md:mb-1 truncate">{item.name}</h4>
                                 <p className="text-xs text-zinc-500 font-secondary mb-2 md:mb-3 hidden sm:block">{item.category}</p>
                                 
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                <div className="flex flex-col gap-2">
                                   <div>
                                     <p className="text-xs text-zinc-500 font-secondary hidden sm:block">Price</p>
                                     <p className="text-base md:text-xl font-bold text-emerald-600 font-primary">₹{item.rate}</p>
                                   </div>
                                   
-                                  {addedItems.has(item.item_id) ? (
-                                    <Button
-                                      onClick={() => removeFromCart(item)}
-                                      disabled={addingItems.has(item.item_id)}
-                                      className="font-secondary w-full sm:w-auto text-xs md:text-sm px-2 md:px-4 bg-rose-600 hover:bg-rose-700 text-white"
-                                      size="sm"
-                                    >
-                                      {addingItems.has(item.item_id) ? (
-                                        <>
-                                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                          Removing
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                          Remove
-                                        </>
-                                      )}
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      onClick={() => addToCart(item)}
-                                      disabled={addingItems.has(item.item_id)}
-                                      className="font-secondary w-full sm:w-auto text-xs md:text-sm px-2 md:px-4 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                      size="sm"
-                                    >
-                                      {addingItems.has(item.item_id) ? (
-                                        <>
-                                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                          Adding
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                          Add {getItemQuantity(item.item_id)}
-                                        </>
-                                      )}
-                                    </Button>
-                                  )}
+                                  <div className="flex items-center gap-2">
+                                    {/* Quantity Controls - Left Half */}
+                                    {!addedItems.has(item.item_id) && (
+                                      <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
+                                        <button
+                                          onClick={() => decreaseQuantity(item.item_id)}
+                                          className="p-1 hover:bg-zinc-200 rounded"
+                                          disabled={getItemQuantity(item.item_id) <= 1}
+                                        >
+                                          <ChevronDown className="h-4 w-4 text-zinc-600" />
+                                        </button>
+                                        <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">
+                                          {getItemQuantity(item.item_id)}
+                                        </span>
+                                        <button
+                                          onClick={() => increaseQuantity(item.item_id)}
+                                          className="p-1 hover:bg-zinc-200 rounded"
+                                        >
+                                          <ChevronUp className="h-4 w-4 text-zinc-600" />
+                                        </button>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Add/Remove Button - Right Half */}
+                                    {addedItems.has(item.item_id) ? (
+                                      <Button
+                                        onClick={() => removeFromCart(item)}
+                                        disabled={addingItems.has(item.item_id)}
+                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-rose-600 hover:bg-rose-700 text-white flex-1"
+                                        size="sm"
+                                      >
+                                        {addingItems.has(item.item_id) ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                            Removing
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                            Remove
+                                          </>
+                                        )}
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        onClick={() => addToCart(item)}
+                                        disabled={addingItems.has(item.item_id)}
+                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                                        size="sm"
+                                      >
+                                        {addingItems.has(item.item_id) ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                            Adding
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                            Add {getItemQuantity(item.item_id)}
+                                          </>
+                                        )}
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
