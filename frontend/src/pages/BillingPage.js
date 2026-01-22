@@ -404,8 +404,8 @@ const BillingPage = ({ user: initialUser }) => {
             </div>
           </div>
 
-        {/* Table Container - Fixed height with scroll */}
-        <div className="flex-1 overflow-auto p-3 md:p-8 pb-1">
+        {/* Table Container - Scrollable with padding for fixed bottom bar */}
+        <div className="flex-1 overflow-auto p-3 md:p-8 pb-32">
           {/* Edit Mode Banner */}
           {editMode && (
             <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
