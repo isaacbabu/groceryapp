@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Menu, Plus, LogOut, User, ShoppingBag, Info, LayoutDashboard, ShoppingCart, Check } from 'lucide-react';
+import { Menu, Plus, LogOut, User, ShoppingBag, Info, LayoutDashboard, ShoppingCart, Check, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
