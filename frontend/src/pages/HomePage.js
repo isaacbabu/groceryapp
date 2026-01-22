@@ -233,7 +233,7 @@ const HomePage = ({ user: initialUser }) => {
                           <Badge variant="secondary" className="font-secondary">{categoryItems.length} items</Badge>
                         </div>
                         
-                        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                           {categoryItems.map(item => (
                             <div 
                               key={item.item_id} 
