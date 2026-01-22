@@ -98,32 +98,35 @@ const HomePage = ({ user: initialUser }) => {
       const cartResponse = await axiosInstance.get('/cart');
       const currentCart = cartResponse.data.items || [];
       
+      // Get the quantity for this item
+      const quantity = getItemQuantity(item.item_id);
+      
       // Check if item already exists in cart
       const existingItemIndex = currentCart.findIndex(cartItem => cartItem.item_id === item.item_id);
       
       let updatedCart;
       if (existingItemIndex >= 0) {
-        // Item exists, increment quantity
+        // Item exists, update quantity
         updatedCart = [...currentCart];
-        updatedCart[existingItemIndex].quantity += 1;
-        updatedCart[existingItemIndex].total = updatedCart[existingItemIndex].quantity * updatedCart[existingItemIndex].rate;
+        updatedCart[existingItemIndex].quantity = quantity;
+        updatedCart[existingItemIndex].total = quantity * updatedCart[existingItemIndex].rate;
       } else {
-        // New item, add to cart with quantity 1
+        // New item, add to cart with specified quantity
         updatedCart = [
           ...currentCart,
           {
             item_id: item.item_id,
             item_name: item.name,
             rate: item.rate,
-            quantity: 1,
-            total: item.rate,
+            quantity: quantity,
+            total: item.rate * quantity,
           }
         ];
       }
       
       // Save updated cart
       await axiosInstance.put('/cart', { items: updatedCart });
-      toast.success(`${item.name} added to cart!`);
+      toast.success(`${item.name} (${quantity}) added to cart!`);
       
       // Mark item as added (stays in this state)
       setAddedItems(prev => new Set([...prev, item.item_id]));
@@ -131,6 +134,46 @@ const HomePage = ({ user: initialUser }) => {
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast.error('Failed to add item to cart');
+    } finally {
+      setAddingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
+    }
+  };
+
+  const removeFromCart = async (item) => {
+    setAddingItems(prev => new Set([...prev, item.item_id]));
+    
+    try {
+      // Get current cart
+      const cartResponse = await axiosInstance.get('/cart');
+      const currentCart = cartResponse.data.items || [];
+      
+      // Remove item from cart
+      const updatedCart = currentCart.filter(cartItem => cartItem.item_id !== item.item_id);
+      
+      // Save updated cart
+      await axiosInstance.put('/cart', { items: updatedCart });
+      toast.success(`${item.name} removed from cart!`);
+      
+      // Remove from added items
+      setAddedItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
+      
+      // Reset quantity to 1
+      setItemQuantities(prev => ({
+        ...prev,
+        [item.item_id]: 1
+      }));
+      
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+      toast.error('Failed to remove item from cart');
     } finally {
       setAddingItems(prev => {
         const newSet = new Set(prev);
