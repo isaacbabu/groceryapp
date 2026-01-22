@@ -345,8 +345,25 @@ async def update_profile(profile: UserProfileUpdate, request: Request, session_t
 
 # Items endpoints
 @api_router.get("/items", response_model=List[Item])
-async def get_items():
-    items = await db.items.find({}, {"_id": 0}).to_list(1000)
+async def get_items(page: int = 1, limit: int = 100):
+    """
+    Get items with pagination
+    - page: page number (default: 1)
+    - limit: items per page (default: 100, max: 500)
+    """
+    # Validate pagination parameters
+    if page < 1:
+        page = 1
+    if limit < 1:
+        limit = 10
+    if limit > 500:
+        limit = 500
+    
+    # Calculate skip value
+    skip = (page - 1) * limit
+    
+    # Fetch items with pagination
+    items = await db.items.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     for item in items:
         if isinstance(item['created_at'], str):
             item['created_at'] = datetime.fromisoformat(item['created_at'])
