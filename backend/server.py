@@ -697,6 +697,11 @@ async def delete_category(category_id: str, request: Request, session_token: Opt
         raise HTTPException(status_code=400, detail=f"Cannot delete category. {items_count} items are using this category.")
     
     await db.categories.delete_one({"category_id": category_id})
+    
+    # Invalidate cache
+    cache.clear()
+    logger.info("Cache cleared after deleting category")
+    
     return {"message": "Category deleted successfully"}
 
 # Orders endpoints
