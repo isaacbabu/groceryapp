@@ -34,7 +34,8 @@ function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      <Route path="/your-order" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><PlacedOrders /></ProtectedRoute>} />
       <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
