@@ -283,6 +283,30 @@ frontend:
         agent: "main"
         comment: "Updated burger menu to include 'Home' (navigates to /) and 'Your Order' (navigates to /your-order). Restructured routing: / now shows HomePage (shopping), /your-order shows BillingPage (cart/checkout)."
 
+  - task: "Database indexing for performance"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added database indexes on startup for items (item_id, category, name), users (user_id, email), orders (order_id, user_id, created_at), cart (user_id), and sessions (session_token, expires_at). Indexes created successfully on backend startup."
+
+  - task: "API pagination for items endpoint"
+    implemented: true
+    working: true
+    file: "backend/server.py, frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added pagination support to GET /api/items endpoint with page and limit parameters (default limit=100, max=500). Frontend updated to fetch items with limit=500 for now. Simple implementation without UI changes."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
