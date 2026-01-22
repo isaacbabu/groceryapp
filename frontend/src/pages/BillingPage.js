@@ -507,7 +507,7 @@ const BillingPage = ({ user: initialUser }) => {
           <div className="mt-4 flex justify-center">
             <Button
               data-testid="add-item-btn"
-              onClick={openItemModal}
+              onClick={() => navigate('/')}
               variant="outline"
               size="icon"
               className="h-12 w-12 rounded-full border-2 border-emerald-900 text-emerald-900 hover:bg-emerald-900 hover:text-white transition-all"
