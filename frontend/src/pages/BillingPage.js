@@ -516,20 +516,24 @@ const BillingPage = ({ user: initialUser }) => {
               Add More Items
             </Button>
           </div>
+        </div>
 
-          {/* Grand Total and Place Order - Same Row */}
-          <div className="mt-4 flex items-center justify-between gap-4">
-            <div className="flex flex-col items-start">
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
-              <p className="text-3xl md:text-4xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
+        {/* Fixed Bottom Bar - Grand Total and Place Order */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-zinc-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-50">
+          <div className="max-w-7xl mx-auto px-3 md:px-8 py-3 md:py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col items-start">
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
+                <p className="text-2xl md:text-4xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
+              </div>
+              <Button
+                data-testid="place-order-btn"
+                onClick={placeOrder}
+                className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}
+              >
+                {editMode ? 'Update Order' : 'Place Order'}
+              </Button>
             </div>
-            <Button
-              data-testid="place-order-btn"
-              onClick={placeOrder}
-              className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}
-            >
-              {editMode ? 'Update Order' : 'Place Order'}
-            </Button>
           </div>
         </div>
         </div>
