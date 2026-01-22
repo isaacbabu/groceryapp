@@ -250,7 +250,7 @@ const HomePage = ({ user: initialUser }) => {
                     <Menu className="h-5 w-5" strokeWidth={1.5} />
                   </Button>
                 </SheetTrigger>
-                <div>
+                <div className="cursor-pointer" onClick={() => navigate('/')}>
                   <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Supermarket</h1>
                   <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
                 </div>
