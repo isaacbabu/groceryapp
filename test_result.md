@@ -319,6 +319,18 @@ frontend:
         agent: "main"
         comment: "Implemented simple in-memory cache with 5-minute TTL for GET /api/items and GET /api/categories endpoints. Cache automatically invalidates when items/categories are added, updated, or deleted. Backend tested and running successfully."
 
+  - task: "Frontend localStorage caching for instant page loads"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added frontend localStorage caching for items and categories with 5-minute TTL. When user navigates back to HomePage, data loads instantly from localStorage cache instead of making API calls. Improves navigation speed significantly."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
