@@ -252,14 +252,23 @@ const HomePage = ({ user: initialUser }) => {
                                   
                                   <Button
                                     onClick={() => addToCart(item)}
-                                    disabled={addingItems.has(item.item_id)}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary"
+                                    disabled={addingItems.has(item.item_id) || addedItems.has(item.item_id)}
+                                    className={`font-secondary ${
+                                      addedItems.has(item.item_id)
+                                        ? 'bg-green-600 hover:bg-green-600'
+                                        : 'bg-emerald-600 hover:bg-emerald-700'
+                                    } text-white`}
                                     size="sm"
                                   >
                                     {addingItems.has(item.item_id) ? (
                                       <>
                                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
                                         Adding...
+                                      </>
+                                    ) : addedItems.has(item.item_id) ? (
+                                      <>
+                                        <Check className="h-4 w-4 mr-1" />
+                                        Added
                                       </>
                                     ) : (
                                       <>
