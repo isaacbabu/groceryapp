@@ -22,6 +22,7 @@ const HomePage = ({ user: initialUser }) => {
   useEffect(() => {
     fetchItems();
     fetchCategories();
+    loadCartItems();
   }, []);
 
   const fetchItems = async () => {
