@@ -47,26 +47,8 @@ const HomePage = ({ user: initialUser }) => {
 
   const fetchCategories = async () => {
     try {
-      // Check localStorage cache first
-      const cachedData = localStorage.getItem('categories_cache');
-      const cacheTimestamp = localStorage.getItem('categories_cache_timestamp');
-      
-      if (cachedData && cacheTimestamp) {
-        const cacheAge = Date.now() - parseInt(cacheTimestamp);
-        // Use cache if less than 5 minutes old (300000 ms)
-        if (cacheAge < 300000) {
-          const parsedCategories = JSON.parse(cachedData);
-          setCategories(parsedCategories);
-          return;
-        }
-      }
-      
       const response = await axiosInstance.get('/categories');
       setCategories(response.data);
-      
-      // Store in localStorage
-      localStorage.setItem('categories_cache', JSON.stringify(response.data));
-      localStorage.setItem('categories_cache_timestamp', Date.now().toString());
     } catch (error) {
       console.error('Failed to load categories');
     }
