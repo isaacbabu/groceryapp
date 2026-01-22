@@ -228,7 +228,7 @@ const HomePage = ({ user: initialUser }) => {
               ) : (
                 <div className="space-y-12">
                   {categories.map(category => {
-                    const categoryItems = itemsByCategory[category] || [];
+                    const categoryItems = filteredItemsByCategory[category] || [];
                     if (categoryItems.length === 0) return null;
 
                     return (
