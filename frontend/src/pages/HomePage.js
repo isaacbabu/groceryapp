@@ -201,7 +201,21 @@ const HomePage = ({ user: initialUser }) => {
               {/* Welcome Section */}
               <div className="mb-8">
                 <h2 className="text-3xl font-bold font-primary text-emerald-950 mb-2">Welcome to Emmanuel Supermarket</h2>
-                <p className="text-zinc-600 font-secondary">Browse our fresh products and add items to your cart</p>
+                <p className="text-zinc-600 font-secondary mb-6">Browse our fresh products and add items to your cart</p>
+                
+                {/* Search Box */}
+                <div className="max-w-2xl">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search for items..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-12 border-zinc-300 focus:border-emerald-500 focus:ring-emerald-500 font-secondary"
+                    />
+                  </div>
+                </div>
               </div>
 
               {loading ? (
