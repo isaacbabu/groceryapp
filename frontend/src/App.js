@@ -6,6 +6,7 @@ import '@/App.css';
 
 import LoginPage from '@/pages/LoginPage';
 import AuthCallback from '@/pages/AuthCallback';
+import HomePage from '@/pages/HomePage';
 import BillingPage from '@/pages/BillingPage';
 import UserProfile from '@/pages/UserProfile';
 import PlacedOrders from '@/pages/PlacedOrders';
