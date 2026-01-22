@@ -589,6 +589,21 @@ async def seed_sample_items():
 # Get categories endpoint
 @api_router.get("/categories")
 async def get_categories():
+    """
+    Get all categories with caching
+    - Cache TTL: 5 minutes
+    """
+    cache_key = "categories_list"
+    
+    # Check cache first
+    cached_categories = cache.get(cache_key, ttl_seconds=300)  # 5 minutes TTL
+    if cached_categories is not None:
+        logger.info("Cache hit for categories")
+        return cached_categories
+    
+    # Fetch from database
+    logger.info("Cache miss for categories, fetching from database")
+    
     # Get categories from the categories collection (both default and custom)
     categories_cursor = db.categories.find({}, {"_id": 0, "name": 1}).sort("name", 1)
     categories_list = await categories_cursor.to_list(1000)
@@ -599,7 +614,12 @@ async def get_categories():
         categories = await db.items.distinct("category")
     
     # Always include "All" at the beginning
-    return ["All"] + sorted(categories)
+    result = ["All"] + sorted(categories)
+    
+    # Store in cache
+    cache.set(cache_key, result)
+    
+    return result
 
 # Category model for admin
 class CategoryCreate(BaseModel):
