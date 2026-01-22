@@ -27,15 +27,39 @@ const HomePage = ({ user: initialUser }) => {
 
   const fetchItems = async () => {
     try {
+      // Check localStorage cache first
+      const cachedData = localStorage.getItem('items_cache');
+      const cacheTimestamp = localStorage.getItem('items_cache_timestamp');
+      
+      if (cachedData && cacheTimestamp) {
+        const cacheAge = Date.now() - parseInt(cacheTimestamp);
+        // Use cache if less than 5 minutes old (300000 ms)
+        if (cacheAge < 300000) {
+          const parsedItems = JSON.parse(cachedData);
+          setItems(parsedItems);
+          setLoading(false);
+          logger.info('Loaded items from localStorage cache');
+          return;
+        }
+      }
+      
       // Fetch all items with higher limit (500 max from backend)
       const response = await axiosInstance.get('/items?limit=500');
       setItems(response.data);
+      
+      // Store in localStorage
+      localStorage.setItem('items_cache', JSON.stringify(response.data));
+      localStorage.setItem('items_cache_timestamp', Date.now().toString());
       
       // If no items, seed sample items
       if (response.data.length === 0) {
         await axiosInstance.post('/seed-items');
         const newResponse = await axiosInstance.get('/items?limit=500');
         setItems(newResponse.data);
+        
+        // Update cache with seeded items
+        localStorage.setItem('items_cache', JSON.stringify(newResponse.data));
+        localStorage.setItem('items_cache_timestamp', Date.now().toString());
       }
     } catch (error) {
       console.error('Failed to load items:', error);
