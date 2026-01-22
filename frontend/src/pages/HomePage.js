@@ -1,0 +1,282 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { axiosInstance } from '@/App';
+import { Menu, Plus, LogOut, User, ShoppingBag, Info, LayoutDashboard, ShoppingCart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+
+const HomePage = ({ user: initialUser }) => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(initialUser);
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [addingItems, setAddingItems] = useState(new Set());
+
+  useEffect(() => {
+    fetchItems();
+    fetchCategories();
+  }, []);
+
+  const fetchItems = async () => {
+    try {
+      const response = await axiosInstance.get('/items');
+      setItems(response.data);
+      
+      // If no items, seed sample items
+      if (response.data.length === 0) {
+        await axiosInstance.post('/seed-items');
+        const newResponse = await axiosInstance.get('/items');
+        setItems(newResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to load items:', error);
+      toast.error('Failed to load items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axiosInstance.get('/categories');
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Failed to load categories');
+    }
+  };
+
+  const addToCart = async (item) => {
+    setAddingItems(prev => new Set([...prev, item.item_id]));
+    
+    try {
+      // Get current cart
+      const cartResponse = await axiosInstance.get('/cart');
+      const currentCart = cartResponse.data.items || [];
+      
+      // Check if item already exists in cart
+      const existingItemIndex = currentCart.findIndex(cartItem => cartItem.item_id === item.item_id);
+      
+      let updatedCart;
+      if (existingItemIndex >= 0) {
+        // Item exists, increment quantity
+        updatedCart = [...currentCart];
+        updatedCart[existingItemIndex].quantity += 1;
+        updatedCart[existingItemIndex].total = updatedCart[existingItemIndex].quantity * updatedCart[existingItemIndex].rate;
+      } else {
+        // New item, add to cart with quantity 1
+        updatedCart = [
+          ...currentCart,
+          {
+            item_id: item.item_id,
+            item_name: item.name,
+            rate: item.rate,
+            quantity: 1,
+            total: item.rate,
+          }
+        ];
+      }
+      
+      // Save updated cart
+      await axiosInstance.put('/cart', { items: updatedCart });
+      toast.success(`${item.name} added to cart!`);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      toast.error('Failed to add item to cart');
+    } finally {
+      setAddingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post('/auth/logout');
+      toast.success('Logged out successfully');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Logout failed');
+    }
+  };
+
+  // Group items by category
+  const itemsByCategory = categories.reduce((acc, category) => {
+    acc[category] = items.filter(item => item.category === category);
+    return acc;
+  }, {});
+
+  return (
+    <div className="min-h-screen flex flex-col bg-zinc-50">
+      {/* Sidebar Sheet */}
+      <Sheet>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetHeader className="p-6 border-b border-zinc-200">
+            <SheetTitle className="font-primary text-xl font-bold text-emerald-950">Menu</SheetTitle>
+          </SheetHeader>
+          <nav className="p-4 space-y-2">
+            <Button onClick={() => navigate('/')} variant="ghost" className="w-full justify-start font-secondary bg-emerald-50 text-emerald-700">
+              <ShoppingCart className="mr-2 h-4 w-4" /> Home
+            </Button>
+            <Button onClick={() => navigate('/your-order')} variant="ghost" className="w-full justify-start font-secondary">
+              <ShoppingBag className="mr-2 h-4 w-4" /> Your Order
+            </Button>
+            <Button onClick={() => navigate('/profile')} variant="ghost" className="w-full justify-start font-secondary">
+              <User className="mr-2 h-4 w-4" /> User Profile
+            </Button>
+            <Button onClick={() => navigate('/orders')} variant="ghost" className="w-full justify-start font-secondary">
+              <ShoppingBag className="mr-2 h-4 w-4" /> Placed Orders
+            </Button>
+            <Button onClick={() => navigate('/about')} variant="ghost" className="w-full justify-start font-secondary">
+              <Info className="mr-2 h-4 w-4" /> About App
+            </Button>
+            {user?.is_admin && (
+              <Button onClick={() => navigate('/admin')} variant="ghost" className="w-full justify-start font-secondary">
+                <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Dashboard
+              </Button>
+            )}
+            <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-secondary">
+              <LogOut className="mr-2 h-4 w-4" /> Logout
+            </Button>
+          </nav>
+        </SheetContent>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-emerald-800 hover:text-white p-0">
+                    <Menu className="h-5 w-5" strokeWidth={1.5} />
+                  </Button>
+                </SheetTrigger>
+                <div>
+                  <h1 className="text-xl md:text-2xl font-bold font-primary text-white tracking-tight">Emmanuel Supermarket</h1>
+                  <p className="text-sm text-emerald-100 font-secondary mt-0.5">Online Grocery Shopping</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Button 
+                  onClick={() => navigate('/your-order')} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary"
+                  size="sm"
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  View Cart
+                </Button>
+                <div className="text-right hidden md:block">
+                  <p className="text-xs text-emerald-200 uppercase tracking-widest font-primary font-bold">User</p>
+                  <p className="text-sm font-medium text-white font-secondary">{user?.name}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+              {/* Welcome Section */}
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold font-primary text-emerald-950 mb-2">Welcome to Emmanuel Supermarket</h2>
+                <p className="text-zinc-600 font-secondary">Browse our fresh products and add items to your cart</p>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                    <p className="text-zinc-600 font-secondary">Loading products...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-12">
+                  {categories.map(category => {
+                    const categoryItems = itemsByCategory[category] || [];
+                    if (categoryItems.length === 0) return null;
+
+                    return (
+                      <div key={category}>
+                        <div className="flex items-center gap-3 mb-6">
+                          <h3 className="text-2xl font-bold font-primary text-emerald-950">{category}</h3>
+                          <Badge variant="secondary" className="font-secondary">{categoryItems.length} items</Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {categoryItems.map(item => (
+                            <div 
+                              key={item.item_id} 
+                              className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200"
+                            >
+                              {/* Item Image */}
+                              <div className="h-48 bg-zinc-100 overflow-hidden">
+                                <img 
+                                  src={item.image_url} 
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop';
+                                  }}
+                                />
+                              </div>
+                              
+                              {/* Item Details */}
+                              <div className="p-4">
+                                <h4 className="font-primary font-bold text-emerald-950 text-lg mb-1 truncate">{item.name}</h4>
+                                <p className="text-sm text-zinc-500 font-secondary mb-3">{item.category}</p>
+                                
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-xs text-zinc-500 font-secondary">Price</p>
+                                    <p className="text-xl font-bold text-emerald-600 font-primary">₹{item.rate}</p>
+                                  </div>
+                                  
+                                  <Button
+                                    onClick={() => addToCart(item)}
+                                    disabled={addingItems.has(item.item_id)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary"
+                                    size="sm"
+                                  >
+                                    {addingItems.has(item.item_id) ? (
+                                      <>
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                        Adding...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Plus className="h-4 w-4 mr-1" />
+                                        Add
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {!loading && items.length === 0 && (
+                <div className="text-center py-20">
+                  <ShoppingCart className="h-16 w-16 text-zinc-300 mx-auto mb-4" />
+                  <p className="text-zinc-600 font-secondary text-lg">No items available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Sheet>
+    </div>
+  );
+};
+
+export default HomePage;
