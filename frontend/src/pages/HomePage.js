@@ -374,7 +374,7 @@ const HomePage = ({ user: initialUser }) => {
                                       <Button
                                         onClick={() => removeFromCart(item)}
                                         disabled={addingItems.has(item.item_id)}
-                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-rose-600 hover:bg-rose-700 text-white flex-1"
+                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-zinc-500 hover:bg-zinc-600 text-white flex-1"
                                         size="sm"
                                       >
                                         {addingItems.has(item.item_id) ? (
