@@ -116,6 +116,17 @@ const HomePage = ({ user: initialUser }) => {
     return acc;
   }, {});
 
+  // Filter items based on search query
+  const filteredItems = searchQuery.trim() 
+    ? items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : items;
+
+  // Group filtered items by category
+  const filteredItemsByCategory = categories.reduce((acc, category) => {
+    acc[category] = filteredItems.filter(item => item.category === category);
+    return acc;
+  }, {});
+
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50">
       {/* Sidebar Sheet */}
