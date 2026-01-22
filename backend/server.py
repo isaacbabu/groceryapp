@@ -669,6 +669,11 @@ async def create_category(category: CategoryCreate, request: Request, session_to
         "created_at": datetime.now(timezone.utc)
     }
     await db.categories.insert_one(category_doc)
+    
+    # Invalidate cache
+    cache.clear()
+    logger.info("Cache cleared after adding new category")
+    
     return {"category_id": category_doc["category_id"], "name": category.name, "is_default": False, "created_at": category_doc["created_at"]}
 
 @api_router.delete("/admin/categories/{category_id}")
