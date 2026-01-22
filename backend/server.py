@@ -385,9 +385,10 @@ async def update_profile(profile: UserProfileUpdate, request: Request, session_t
 @api_router.get("/items", response_model=List[Item])
 async def get_items(page: int = 1, limit: int = 100):
     """
-    Get items with pagination
+    Get items with pagination and caching
     - page: page number (default: 1)
     - limit: items per page (default: 100, max: 500)
+    - Cache TTL: 5 minutes
     """
     # Validate pagination parameters
     if page < 1:
@@ -397,14 +398,28 @@ async def get_items(page: int = 1, limit: int = 100):
     if limit > 500:
         limit = 500
     
+    # Create cache key
+    cache_key = f"items_page_{page}_limit_{limit}"
+    
+    # Check cache first
+    cached_items = cache.get(cache_key, ttl_seconds=300)  # 5 minutes TTL
+    if cached_items is not None:
+        logger.info(f"Cache hit for {cache_key}")
+        return cached_items
+    
     # Calculate skip value
     skip = (page - 1) * limit
     
-    # Fetch items with pagination
+    # Fetch items from database
+    logger.info(f"Cache miss for {cache_key}, fetching from database")
     items = await db.items.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
     for item in items:
         if isinstance(item['created_at'], str):
             item['created_at'] = datetime.fromisoformat(item['created_at'])
+    
+    # Store in cache
+    cache.set(cache_key, items)
+    
     return items
 
 @api_router.post("/admin/items", response_model=Item)
