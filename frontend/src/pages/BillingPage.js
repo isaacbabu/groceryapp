@@ -532,6 +532,7 @@ const BillingPage = ({ user: initialUser }) => {
             </Button>
           </div>
         </div>
+        </div>
 
       {/* Item Selection Modal */}
       <Dialog open={showModal} onOpenChange={(open) => !open && closeItemModal()}>
