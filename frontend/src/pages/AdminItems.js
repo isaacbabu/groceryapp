@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
 import { ArrowLeft, Plus, Edit, Trash2, Upload, Package } from 'lucide-react';
@@ -36,32 +36,26 @@ const AdminItems = ({ user }) => {
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  useEffect(() => {
-    if (!user?.is_admin) {
-      toast.error('Admin access required');
-      navigate('/');
-      return;
-    }
-    fetchItems();
-    fetchCategories();
-  }, [user, navigate]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/categories');
       // Filter out "All" from categories for item creation
       const cats = response.data.filter(cat => cat !== 'All');
       setCategories(cats);
+
       // Set default category if not set
-      if (!formData.category && cats.length > 0) {
-        setFormData(prev => ({ ...prev, category: cats[0] }));
-      }
+      setFormData(prev => {
+        if (!prev.category && cats.length > 0) {
+          return { ...prev, category: cats[0] };
+        }
+        return prev;
+      });
     } catch (error) {
       console.error('Failed to load categories');
     }
-  };
+  }, []);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/items');
       setItems(response.data);
@@ -70,7 +64,17 @@ const AdminItems = ({ user }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user?.is_admin) {
+      toast.error('Admin access required');
+      navigate('/');
+      return;
+    }
+    fetchItems();
+    fetchCategories();
+  }, [user?.is_admin, navigate, fetchItems, fetchCategories]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
