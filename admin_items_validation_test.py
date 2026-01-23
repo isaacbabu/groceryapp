@@ -10,7 +10,7 @@ from datetime import datetime
 
 class AdminItemsValidationTest:
     def __init__(self):
-        self.base_url = "https://menu-navigation-fix-1.preview.emergentagent.com/api"
+        self.base_url = "https://foodapp-reborn.preview.emergentagent.com/api"
         # Using the actual admin session token from database
         self.session_token = "VxbQJv-KQjSxx5BASUbDTaboP53uNvNgXHRUhp5gQxU"
         
@@ -219,7 +219,7 @@ class AdminItemsValidationTest:
 
 def main():
     print("🚀 Testing POST /api/admin/items validation scenarios")
-    print(f"Backend URL: https://menu-navigation-fix-1.preview.emergentagent.com/api")
+    print(f"Backend URL: https://foodapp-reborn.preview.emergentagent.com/api")
     print(f"Test started at: {datetime.now()}")
     print("="*70)
     

@@ -11,7 +11,7 @@ from datetime import datetime
 
 class AdminItemsTest:
     def __init__(self):
-        self.base_url = "https://menu-navigation-fix-1.preview.emergentagent.com/api"
+        self.base_url = "https://foodapp-reborn.preview.emergentagent.com/api"
         self.session_token = None
         
     def create_admin_session(self):
@@ -167,7 +167,7 @@ class AdminItemsTest:
 
 def main():
     print("🚀 Testing POST /api/admin/items endpoint")
-    print(f"Backend URL: https://menu-navigation-fix-1.preview.emergentagent.com/api")
+    print(f"Backend URL: https://foodapp-reborn.preview.emergentagent.com/api")
     print(f"Test started at: {datetime.now()}")
     print("="*60)
     
