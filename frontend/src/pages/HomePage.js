@@ -444,11 +444,7 @@ const HomePage = ({ user: initialUser }) => {
                                           className="h-9 w-9 md:h-10 md:w-10 border-zinc-300 text-zinc-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
                                           aria-label={`Remove ${item.name} from cart`}
                                         >
-                                          {addingItems.has(item.item_id) ? (
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-700"></div>
-                                          ) : (
-                                            <Trash2 className="h-4 w-4" />
-                                          )}
+                                          <Trash2 className="h-4 w-4" />
                                         </Button>
                                       </>
                                     ) : (
