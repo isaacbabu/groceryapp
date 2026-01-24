@@ -79,7 +79,9 @@ const HomePage = ({ user: initialUser }) => {
   };
 
   const updateCartItemQuantity = async (item, nextQuantity) => {
-    setAddingItems(prev => new Set([...prev, item.item_id]));
+    // NOTE: we intentionally do NOT add this item to `addingItems`.
+    // That state is used to disable controls / show loaders for add/remove,
+    // but quantity updates should feel instant and should not animate the trash icon.
 
     try {
       const cartResponse = await axiosInstance.get('/cart');
@@ -115,12 +117,6 @@ const HomePage = ({ user: initialUser }) => {
     } catch (error) {
       console.error('Failed to update quantity:', error);
       toast.error('Failed to update quantity');
-    } finally {
-      setAddingItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(item.item_id);
-        return newSet;
-      });
     }
   };
 
