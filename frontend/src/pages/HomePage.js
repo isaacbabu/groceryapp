@@ -420,7 +420,7 @@ const HomePage = ({ user: initialUser }) => {
                                           <button
                                             onClick={() => decreaseQuantity(item)}
                                             className="p-1 hover:bg-zinc-200 rounded"
-                                            disabled={addingItems.has(item.item_id) || getItemQuantity(item.item_id) <= 1}
+                                            disabled={getItemQuantity(item.item_id) <= 1}
                                           >
                                             <ChevronDown className="h-4 w-4 text-zinc-600" />
                                           </button>
