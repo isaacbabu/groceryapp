@@ -421,7 +421,7 @@ const HomePage = ({ user: initialUser }) => {
                                     {!addedItems.has(item.item_id) && (
                                       <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
                                         <button
-                                          onClick={() => decreaseQuantity(item.item_id)}
+                                          onClick={() => decreaseQuantity(item)}
                                           className="p-1 hover:bg-zinc-200 rounded"
                                           disabled={getItemQuantity(item.item_id) <= 1}
                                         >
