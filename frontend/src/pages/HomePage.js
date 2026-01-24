@@ -455,7 +455,7 @@ const HomePage = ({ user: initialUser }) => {
                                     ) : (
                                       <Button
                                         onClick={() => addToCart(item)}
-                                        disabled={addingItems.has(item.item_id)}
+                                        disabled={false}
                                         className="font-secondary text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full"
                                         size="sm"
                                       >
