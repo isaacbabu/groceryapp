@@ -74,28 +74,79 @@ const HomePage = ({ user: initialUser }) => {
     }
   };
 
-  const increaseQuantity = (itemId) => {
-    setItemQuantities(prev => ({
-      ...prev,
-      [itemId]: (prev[itemId] || 1) + 1
-    }));
-  };
-
-  const decreaseQuantity = (itemId) => {
-    setItemQuantities(prev => {
-      const currentQty = prev[itemId] || 1;
-      if (currentQty > 1) {
-        return {
-          ...prev,
-          [itemId]: currentQty - 1
-        };
-      }
-      return prev;
-    });
-  };
-
   const getItemQuantity = (itemId) => {
     return itemQuantities[itemId] || 1;
+  };
+
+  const updateCartItemQuantity = async (item, nextQuantity) => {
+    setAddingItems(prev => new Set([...prev, item.item_id]));
+
+    try {
+      const cartResponse = await axiosInstance.get('/cart');
+      const currentCart = cartResponse.data.items || [];
+
+      const existingItemIndex = currentCart.findIndex(
+        cartItem => cartItem.item_id === item.item_id
+      );
+
+      let updatedCart = [...currentCart];
+      if (existingItemIndex >= 0) {
+        updatedCart[existingItemIndex] = {
+          ...updatedCart[existingItemIndex],
+          quantity: nextQuantity,
+          total: nextQuantity * updatedCart[existingItemIndex].rate,
+        };
+      } else {
+        // Should be rare, but keeps cart consistent if UI state gets out of sync
+        updatedCart = [
+          ...currentCart,
+          {
+            item_id: item.item_id,
+            item_name: item.name,
+            rate: item.rate,
+            quantity: nextQuantity,
+            total: item.rate * nextQuantity,
+          },
+        ];
+        setAddedItems(prev => new Set([...prev, item.item_id]));
+      }
+
+      await axiosInstance.put('/cart', { items: updatedCart });
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+      toast.error('Failed to update quantity');
+    } finally {
+      setAddingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
+    }
+  };
+
+  const setQuantity = (item, nextQuantity) => {
+    // Update local state instantly for snappy UI
+    setItemQuantities(prev => ({
+      ...prev,
+      [item.item_id]: nextQuantity,
+    }));
+
+    // If it's already in cart, persist the updated quantity
+    if (addedItems.has(item.item_id)) {
+      updateCartItemQuantity(item, nextQuantity);
+    }
+  };
+
+  const increaseQuantity = (item) => {
+    const currentQty = getItemQuantity(item.item_id);
+    setQuantity(item, currentQty + 1);
+  };
+
+  const decreaseQuantity = (item) => {
+    const currentQty = getItemQuantity(item.item_id);
+    if (currentQty > 1) {
+      setQuantity(item, currentQty - 1);
+    }
   };
 
   const addToCart = async (item) => {
