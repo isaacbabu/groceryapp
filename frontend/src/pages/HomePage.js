@@ -58,10 +58,17 @@ const HomePage = ({ user: initialUser }) => {
     try {
       const response = await axiosInstance.get('/cart');
       const cartItems = response.data.items || [];
-      
+
       // Mark items that are in cart as added
       const addedItemIds = new Set(cartItems.map(item => item.item_id));
       setAddedItems(addedItemIds);
+
+      // Hydrate quantity state from persisted cart so UI reflects real quantities
+      const quantitiesFromCart = cartItems.reduce((acc, cartItem) => {
+        acc[cartItem.item_id] = cartItem.quantity || 1;
+        return acc;
+      }, {});
+      setItemQuantities(prev => ({ ...prev, ...quantitiesFromCart }));
     } catch (error) {
       console.error('Failed to load cart items');
     }
