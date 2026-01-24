@@ -438,7 +438,7 @@ const HomePage = ({ user: initialUser }) => {
                                         {/* Trash icon (RIGHT) */}
                                         <Button
                                           onClick={() => removeFromCart(item)}
-                                          disabled={false}
+                                          disabled={addingItems.has(item.item_id)}
                                           variant="outline"
                                           size="icon"
                                           className="h-9 w-9 md:h-10 md:w-10 border-zinc-300 text-zinc-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
