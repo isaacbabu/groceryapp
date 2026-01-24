@@ -431,7 +431,7 @@ const HomePage = ({ user: initialUser }) => {
                                           {getItemQuantity(item.item_id)}
                                         </span>
                                         <button
-                                          onClick={() => increaseQuantity(item.item_id)}
+                                          onClick={() => increaseQuantity(item)}
                                           className="p-1 hover:bg-zinc-200 rounded"
                                         >
                                           <ChevronUp className="h-4 w-4 text-zinc-600" />
