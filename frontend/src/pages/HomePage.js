@@ -151,18 +151,25 @@ const HomePage = ({ user: initialUser }) => {
 
   const addToCart = async (item) => {
     setAddingItems(prev => new Set([...prev, item.item_id]));
-    
+
+    // Ensure first click always adds quantity=1, and reveals the toggler
+    setItemQuantities(prev => ({
+      ...prev,
+      [item.item_id]: 1,
+    }));
+
     try {
       // Get current cart
       const cartResponse = await axiosInstance.get('/cart');
       const currentCart = cartResponse.data.items || [];
-      
-      // Get the quantity for this item
-      const quantity = getItemQuantity(item.item_id);
-      
+
+      const quantity = 1;
+
       // Check if item already exists in cart
-      const existingItemIndex = currentCart.findIndex(cartItem => cartItem.item_id === item.item_id);
-      
+      const existingItemIndex = currentCart.findIndex(
+        cartItem => cartItem.item_id === item.item_id
+      );
+
       let updatedCart;
       if (existingItemIndex >= 0) {
         // Item exists, update quantity
@@ -170,29 +177,34 @@ const HomePage = ({ user: initialUser }) => {
         updatedCart[existingItemIndex].quantity = quantity;
         updatedCart[existingItemIndex].total = quantity * updatedCart[existingItemIndex].rate;
       } else {
-        // New item, add to cart with specified quantity
+        // New item
         updatedCart = [
           ...currentCart,
           {
             item_id: item.item_id,
             item_name: item.name,
             rate: item.rate,
-            quantity: quantity,
+            quantity,
             total: item.rate * quantity,
-          }
+          },
         ];
       }
-      
+
       // Save updated cart
       await axiosInstance.put('/cart', { items: updatedCart });
-      toast.success(`${item.name} (${quantity}) added to cart!`);
-      
-      // Mark item as added (stays in this state)
+      toast.success(`${item.name} added to cart!`);
+
       setAddedItems(prev => new Set([...prev, item.item_id]));
-      
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast.error('Failed to add item to cart');
+
+      // If add fails, revert UI back to pre-add state
+      setAddedItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
     } finally {
       setAddingItems(prev => {
         const newSet = new Set(prev);
