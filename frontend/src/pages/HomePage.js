@@ -417,54 +417,50 @@ const HomePage = ({ user: initialUser }) => {
                                   </div>
                                   
                                   <div className="flex items-center gap-2">
-                                    {/* Quantity Controls - Left Half */}
-                                    {!addedItems.has(item.item_id) && (
-                                      <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
-                                        <button
-                                          onClick={() => decreaseQuantity(item)}
-                                          className="p-1 hover:bg-zinc-200 rounded"
-                                          disabled={addingItems.has(item.item_id) || getItemQuantity(item.item_id) <= 1}
-                                        >
-                                          <ChevronDown className="h-4 w-4 text-zinc-600" />
-                                        </button>
-                                        <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">
-                                          {getItemQuantity(item.item_id)}
-                                        </span>
-                                        <button
-                                          onClick={() => increaseQuantity(item)}
-                                          className="p-1 hover:bg-zinc-200 rounded"
-                                          disabled={addingItems.has(item.item_id)}
-                                        >
-                                          <ChevronUp className="h-4 w-4 text-zinc-600" />
-                                        </button>
-                                      </div>
-                                    )}
-                                    
-                                    {/* Add/Remove Button - Right Half */}
                                     {addedItems.has(item.item_id) ? (
-                                      <Button
-                                        onClick={() => removeFromCart(item)}
-                                        disabled={addingItems.has(item.item_id)}
-                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-zinc-500 hover:bg-zinc-600 text-white flex-1"
-                                        size="sm"
-                                      >
-                                        {addingItems.has(item.item_id) ? (
-                                          <>
-                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                            Removing
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                            Remove
-                                          </>
-                                        )}
-                                      </Button>
+                                      <>
+                                        {/* Quantity Controls (LEFT) */}
+                                        <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
+                                          <button
+                                            onClick={() => decreaseQuantity(item)}
+                                            className="p-1 hover:bg-zinc-200 rounded"
+                                            disabled={addingItems.has(item.item_id) || getItemQuantity(item.item_id) <= 1}
+                                          >
+                                            <ChevronDown className="h-4 w-4 text-zinc-600" />
+                                          </button>
+                                          <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">
+                                            {getItemQuantity(item.item_id)}
+                                          </span>
+                                          <button
+                                            onClick={() => increaseQuantity(item)}
+                                            className="p-1 hover:bg-zinc-200 rounded"
+                                            disabled={addingItems.has(item.item_id)}
+                                          >
+                                            <ChevronUp className="h-4 w-4 text-zinc-600" />
+                                          </button>
+                                        </div>
+
+                                        {/* Trash icon (RIGHT) */}
+                                        <Button
+                                          onClick={() => removeFromCart(item)}
+                                          disabled={addingItems.has(item.item_id)}
+                                          variant="outline"
+                                          size="icon"
+                                          className="h-9 w-9 md:h-10 md:w-10 border-zinc-300 text-zinc-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                                          aria-label={`Remove ${item.name} from cart`}
+                                        >
+                                          {addingItems.has(item.item_id) ? (
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-700"></div>
+                                          ) : (
+                                            <Trash2 className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </>
                                     ) : (
                                       <Button
                                         onClick={() => addToCart(item)}
                                         disabled={addingItems.has(item.item_id)}
-                                        className="font-secondary text-xs px-2 bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                                        className="font-secondary text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full"
                                         size="sm"
                                       >
                                         {addingItems.has(item.item_id) ? (
@@ -473,9 +469,7 @@ const HomePage = ({ user: initialUser }) => {
                                             Adding
                                           </>
                                         ) : (
-                                          <>
-                                            Add {getItemQuantity(item.item_id)}
-                                          </>
+                                          <>Add to Cart</>
                                         )}
                                       </Button>
                                     )}
