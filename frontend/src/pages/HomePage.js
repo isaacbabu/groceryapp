@@ -430,7 +430,6 @@ const HomePage = ({ user: initialUser }) => {
                                           <button
                                             onClick={() => increaseQuantity(item)}
                                             className="p-1 hover:bg-zinc-200 rounded"
-                                            disabled={false}
                                           >
                                             <ChevronUp className="h-4 w-4 text-zinc-600" />
                                           </button>
