@@ -832,7 +832,7 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://emmanuel-supermarket-frontend-anfkyi9nc-babu-joses-projects.vercel.app",
+        "https://emmanuel-supermarket-frontend-6ldkr8l69-babu-joses-projects.vercel.app",
         "http://localhost:3000",  # for dev
         "https://emmanuelsupermarket.in"  # future custom domain
     ],
