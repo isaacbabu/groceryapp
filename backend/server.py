@@ -270,39 +270,39 @@ async def get_current_user(request: Request, session_token: Optional[str] = Cook
     
     return User(**user_doc)
 
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+
 # Auth endpoints
 @api_router.post("/auth/session")
 async def create_session(request: Request, response: Response):
     body = await request.json()
-    session_id = body.get('session_id')
-    
-    if not session_id:
-        raise HTTPException(status_code=400, detail="session_id required")
-    
+    id_token_str = body.get("id_token")
+
+    if not id_token_str:
+        raise HTTPException(status_code=400, detail="id_token required")
+
     try:
-        auth_response = requests.get(
-            'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data',
-            headers={'X-Session-ID': session_id},
-            timeout=10
+        # Verify the ID token with Google
+        idinfo = id_token.verify_oauth2_token(
+            id_token_str,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID
         )
-        auth_response.raise_for_status()
-        session_data = auth_response.json()
+        user_email = idinfo["email"]
+        user_name = idinfo.get("name", "")
+        user_picture = idinfo.get("picture", "")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to get session data: {str(e)}")
-    
-    session_token = session_data['session_token']
-    user_email = session_data['email']
-    user_name = session_data['name']
-    user_picture = session_data.get('picture')
-    
-    existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
-    
+        raise HTTPException(status_code=400, detail=f"Invalid ID token: {str(e)}")
+
     # Admin emails list
     ADMIN_EMAILS = ["isaac.babu.personal@gmail.com"]
-    
+
+    existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
     if existing_user:
-        user_id = existing_user['user_id']
-        # Check if user should be admin
+        user_id = existing_user["user_id"]
         is_admin = user_email in ADMIN_EMAILS
         await db.users.update_one(
             {"user_id": user_id},
@@ -321,14 +321,17 @@ async def create_session(request: Request, response: Response):
             "is_admin": is_admin,
             "created_at": datetime.now(timezone.utc)
         })
-    
+
+    # Create a new session token
+    session_token = f"session_{uuid.uuid4().hex}"
     await db.user_sessions.insert_one({
         "user_id": user_id,
         "session_token": session_token,
         "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
         "created_at": datetime.now(timezone.utc)
     })
-    
+
+    # Set cookie
     response.set_cookie(
         key="session_token",
         value=session_token,
@@ -338,11 +341,11 @@ async def create_session(request: Request, response: Response):
         path="/",
         max_age=7*24*60*60
     )
-    
+
     user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    if isinstance(user_doc['created_at'], str):
-        user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
-    
+    if isinstance(user_doc["created_at"], str):
+        user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
+
     return {"user": User(**user_doc).model_dump(), "session_token": session_token}
 
 @api_router.get("/auth/me")

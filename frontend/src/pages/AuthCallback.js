@@ -16,15 +16,15 @@ const AuthCallback = () => {
       try {
         const hash = location.hash.substring(1);
         const params = new URLSearchParams(hash);
-        const sessionId = params.get('session_id');
+        const idToken = params.get('id_token');
 
-        if (!sessionId) {
+        if (!idToken) {
           toast.error('Invalid authentication');
           navigate('/login');
           return;
         }
 
-        const response = await axiosInstance.post('/auth/session', { session_id: sessionId });
+        const response = await axiosInstance.post('/auth/session', { id_token: idToken });
         const user = response.data.user;
 
         toast.success(`Welcome, ${user.name}!`);
