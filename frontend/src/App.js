@@ -25,15 +25,10 @@ export const axiosInstance = axios.create({
 });
 
 function AppRouter() {
-  const location = useLocation();
-  
-  if (location.hash?.includes('session_id=')) {
-    return <AuthCallback />;
-  }
-  
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/your-order" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
