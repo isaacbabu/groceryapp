@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 class OrderUpdateTester:
-    def __init__(self, base_url="https://foodapp-reborn.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://add-button-enhance.preview.emergentagent.com/api"):
         self.base_url = base_url
         # Use an existing valid session token from the database
         self.session_token = "VvTXKh0ayhN0giG652296EcNgnPdNWTrkI_pLKFDieY"
