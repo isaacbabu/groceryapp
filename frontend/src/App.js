@@ -17,7 +17,7 @@ import AdminCategories from '@/pages/AdminCategories';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-export const API = `${BACKEND_URL}/api`;
+export const API = BACKEND_URL;
 
 export const axiosInstance = axios.create({
   baseURL: API,
