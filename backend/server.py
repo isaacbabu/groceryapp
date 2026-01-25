@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
@@ -66,6 +66,18 @@ cache = SimpleCache()
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+frontend_url = os.getenv("FRONTEND_URL")  # set in Heroku config vars
+custom_domain = os.getenv("CUSTOM_DOMAIN", "https://emmanuelsupermarket.in")
+
+origins = [o for o in [frontend_url, "http://localhost:3000", custom_domain] if o]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Add validation error handler for detailed logging
 @app.exception_handler(RequestValidationError)
@@ -831,15 +843,12 @@ app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://emmanuel-supermarket-frontend-6ldkr8l69-babu-joses-projects.vercel.app",
-        "http://localhost:3000",  # for dev
-        "https://emmanuelsupermarket.in"  # future custom domain
-    ],
     allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -878,3 +887,4 @@ async def startup_db_client():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+app.include_router(api_router)
