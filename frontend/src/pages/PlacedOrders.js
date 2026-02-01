@@ -49,7 +49,7 @@ const PlacedOrders = () => {
 
   const handleEditOrder = (order) => {
     // Navigate to billing page with order data for editing
-    navigate('/', { 
+    navigate('/your-order', { 
       state: { 
         editOrder: {
           order_id: order.order_id,
