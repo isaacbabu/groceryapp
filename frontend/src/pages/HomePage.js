@@ -155,38 +155,20 @@ const HomePage = ({ user: initialUser }) => {
     }));
 
     try {
-      // Get current cart
-      const cartResponse = await axiosInstance.get('/cart');
-      const currentCart = cartResponse.data.items || [];
-
-      const quantity = 1;
-
-      // Check if item already exists in cart
-      const existingItemIndex = currentCart.findIndex(
-        cartItem => cartItem.item_id === item.item_id
-      );
-
-      let updatedCart;
-      if (existingItemIndex >= 0) {
-        // Item exists, update quantity
-        updatedCart = [...currentCart];
-        updatedCart[existingItemIndex].quantity = quantity;
-        updatedCart[existingItemIndex].total = quantity * updatedCart[existingItemIndex].rate;
-      } else {
-        // New item
-        updatedCart = [
-          ...currentCart,
-          {
-            item_id: item.item_id,
-            item_name: item.name,
-            rate: item.rate,
+      // Build cart payload purely from local state to avoid extra GET /cart per click
+      const updatedCart = items
+        .filter(i => addedItems.has(i.item_id) || i.item_id === item.item_id)
+        .map(i => {
+          const quantity = i.item_id === item.item_id ? 1 : getItemQuantity(i.item_id);
+          return {
+            item_id: i.item_id,
+            item_name: i.name,
+            rate: i.rate,
             quantity,
-            total: item.rate * quantity,
-          },
-        ];
-      }
+            total: i.rate * quantity,
+          };
+        });
 
-      // Save updated cart
       await axiosInstance.put('/cart', { items: updatedCart });
       toast.success(`${item.name} added to cart!`);
 
