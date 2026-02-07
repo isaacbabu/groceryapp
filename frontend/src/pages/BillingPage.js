@@ -456,38 +456,33 @@ const BillingPage = ({ user: initialUser }) => {
                     <td className="p-2 align-middle font-mono text-sm text-zinc-700">{index + 1}</td>
                     <td className="p-2 align-middle font-secondary text-sm text-zinc-700">{row.item_name}</td>
                     <td className="p-2 align-middle font-mono text-sm text-emerald-700">₹{row.rate.toFixed(2)}</td>
-                    <td className="p-2 align-middle">
-                      <div className="relative inline-flex items-center">
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(row.id, String((parseFloat(row.quantity) || 0) + 1))}
-                          className="absolute left-1 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded transition-colors"
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </button>
-                        <Input
-                          data-testid={`qty-input-${index}`}
-                          type="text"
-                          inputMode="decimal"
-                          value={row.quantity}
-                          onChange={(e) => updateQuantity(row.id, e.target.value)}
-                          onFocus={(e) => {
-                            const len = e.target.value.length;
-                            e.target.setSelectionRange(len, len);
-                          }}
-                          onClick={(e) => {
-                            const len = e.target.value.length;
-                            e.target.setSelectionRange(len, len);
-                          }}
-                          onKeyUp={(e) => {
-                            const len = e.target.value.length;
-                            e.target.setSelectionRange(len, len);
-                          }}
-                          placeholder="1"
-                          className="h-8 w-16 bg-transparent border border-zinc-200 rounded-md pl-6 pr-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
-                        />
-                      </div>
-                    </td>
+                        <td className="p-2 align-middle">
+                          <div className="relative inline-flex items-center">
+                            {/* Increment button removed */}
+                            <Input
+                              data-testid={`qty-input-${index}`}
+                              type="text"
+                              inputMode="decimal"
+                              value={row.quantity}
+                              onChange={(e) => updateQuantity(row.id, e.target.value)}
+                              onFocus={(e) => {
+                                const len = e.target.value.length;
+                                e.target.setSelectionRange(len, len);
+                              }}
+                              onClick={(e) => {
+                                const len = e.target.value.length;
+                                e.target.setSelectionRange(len, len);
+                              }}
+                              onKeyUp={(e) => {
+                                const len = e.target.value.length;
+                                e.target.setSelectionRange(len, len);
+                              }}
+                              placeholder="1"
+                              /* Removed pl-6 and added px-2 for better alignment */
+                              className="h-8 w-16 bg-transparent border border-zinc-200 rounded-md px-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
+                            />
+                          </div>
+                        </td>
                     <td className="p-2 align-middle font-mono text-sm font-medium text-emerald-900">₹{row.total.toFixed(2)}</td>
                     <td className="p-2 align-middle">
                       <button
