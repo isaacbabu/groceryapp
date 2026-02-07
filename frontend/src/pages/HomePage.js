@@ -58,83 +58,131 @@ const HomePage = ({ user: initialUser }) => {
     try {
       const response = await axiosInstance.get('/cart');
       const cartItems = response.data.items || [];
-      
+
       // Mark items that are in cart as added
       const addedItemIds = new Set(cartItems.map(item => item.item_id));
       setAddedItems(addedItemIds);
+
+      // Hydrate quantity state from persisted cart so UI reflects real quantities
+      const quantitiesFromCart = cartItems.reduce((acc, cartItem) => {
+        acc[cartItem.item_id] = cartItem.quantity || 1;
+        return acc;
+      }, {});
+      setItemQuantities(prev => ({ ...prev, ...quantitiesFromCart }));
     } catch (error) {
       console.error('Failed to load cart items');
     }
-  };
-
-  const increaseQuantity = (itemId) => {
-    setItemQuantities(prev => ({
-      ...prev,
-      [itemId]: (prev[itemId] || 1) + 1
-    }));
-  };
-
-  const decreaseQuantity = (itemId) => {
-    setItemQuantities(prev => {
-      const currentQty = prev[itemId] || 1;
-      if (currentQty > 1) {
-        return {
-          ...prev,
-          [itemId]: currentQty - 1
-        };
-      }
-      return prev;
-    });
   };
 
   const getItemQuantity = (itemId) => {
     return itemQuantities[itemId] || 1;
   };
 
-  const addToCart = async (item) => {
-    setAddingItems(prev => new Set([...prev, item.item_id]));
-    
+  const updateCartItemQuantity = async (item, nextQuantity) => {
+    // NOTE: we intentionally do NOT add this item to `addingItems`.
+    // That state is used to disable controls / show loaders for add/remove,
+    // but quantity updates should feel instant and should not animate the trash icon.
+
     try {
-      // Get current cart
       const cartResponse = await axiosInstance.get('/cart');
       const currentCart = cartResponse.data.items || [];
-      
-      // Get the quantity for this item
-      const quantity = getItemQuantity(item.item_id);
-      
-      // Check if item already exists in cart
-      const existingItemIndex = currentCart.findIndex(cartItem => cartItem.item_id === item.item_id);
-      
-      let updatedCart;
+
+      const existingItemIndex = currentCart.findIndex(
+        cartItem => cartItem.item_id === item.item_id
+      );
+
+      let updatedCart = [...currentCart];
       if (existingItemIndex >= 0) {
-        // Item exists, update quantity
-        updatedCart = [...currentCart];
-        updatedCart[existingItemIndex].quantity = quantity;
-        updatedCart[existingItemIndex].total = quantity * updatedCart[existingItemIndex].rate;
+        updatedCart[existingItemIndex] = {
+          ...updatedCart[existingItemIndex],
+          quantity: nextQuantity,
+          total: nextQuantity * updatedCart[existingItemIndex].rate,
+        };
       } else {
-        // New item, add to cart with specified quantity
+        // Should be rare, but keeps cart consistent if UI state gets out of sync
         updatedCart = [
           ...currentCart,
           {
             item_id: item.item_id,
             item_name: item.name,
             rate: item.rate,
-            quantity: quantity,
-            total: item.rate * quantity,
-          }
+            quantity: nextQuantity,
+            total: item.rate * nextQuantity,
+          },
         ];
+        setAddedItems(prev => new Set([...prev, item.item_id]));
       }
-      
-      // Save updated cart
+
       await axiosInstance.put('/cart', { items: updatedCart });
-      toast.success(`${item.name} (${quantity}) added to cart!`);
-      
-      // Mark item as added (stays in this state)
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+      toast.error('Failed to update quantity');
+    }
+  };
+
+  const setQuantity = (item, nextQuantity) => {
+    // Update local state instantly for snappy UI
+    setItemQuantities(prev => ({
+      ...prev,
+      [item.item_id]: nextQuantity,
+    }));
+
+    // If it's already in cart, persist the updated quantity
+    if (addedItems.has(item.item_id)) {
+      updateCartItemQuantity(item, nextQuantity);
+    }
+  };
+
+  const increaseQuantity = (item) => {
+    const currentQty = getItemQuantity(item.item_id);
+    setQuantity(item, currentQty + 1);
+  };
+
+  const decreaseQuantity = (item) => {
+    const currentQty = getItemQuantity(item.item_id);
+    if (currentQty > 1) {
+      setQuantity(item, currentQty - 1);
+    }
+  };
+
+  const addToCart = async (item) => {
+    setAddingItems(prev => new Set([...prev, item.item_id]));
+
+    // Ensure first click always adds quantity=1, and reveals the toggler
+    setItemQuantities(prev => ({
+      ...prev,
+      [item.item_id]: 1,
+    }));
+
+    try {
+      // Build cart payload purely from local state to avoid extra GET /cart per click
+      const updatedCart = items
+        .filter(i => addedItems.has(i.item_id) || i.item_id === item.item_id)
+        .map(i => {
+          const quantity = i.item_id === item.item_id ? 1 : getItemQuantity(i.item_id);
+          return {
+            item_id: i.item_id,
+            item_name: i.name,
+            rate: i.rate,
+            quantity,
+            total: i.rate * quantity,
+          };
+        });
+
+      await axiosInstance.put('/cart', { items: updatedCart });
+      toast.success(`${item.name} added to cart!`);
+
       setAddedItems(prev => new Set([...prev, item.item_id]));
-      
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast.error('Failed to add item to cart');
+
+      // If add fails, revert UI back to pre-add state
+      setAddedItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
     } finally {
       setAddingItems(prev => {
         const newSet = new Set(prev);
@@ -347,53 +395,45 @@ const HomePage = ({ user: initialUser }) => {
                                   </div>
                                   
                                   <div className="flex items-center gap-2">
-                                    {/* Quantity Controls - Left Half */}
-                                    {!addedItems.has(item.item_id) && (
-                                      <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
-                                        <button
-                                          onClick={() => decreaseQuantity(item.item_id)}
-                                          className="p-1 hover:bg-zinc-200 rounded"
-                                          disabled={getItemQuantity(item.item_id) <= 1}
-                                        >
-                                          <ChevronDown className="h-4 w-4 text-zinc-600" />
-                                        </button>
-                                        <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">
-                                          {getItemQuantity(item.item_id)}
-                                        </span>
-                                        <button
-                                          onClick={() => increaseQuantity(item.item_id)}
-                                          className="p-1 hover:bg-zinc-200 rounded"
-                                        >
-                                          <ChevronUp className="h-4 w-4 text-zinc-600" />
-                                        </button>
-                                      </div>
-                                    )}
-                                    
-                                    {/* Add/Remove Button - Right Half */}
                                     {addedItems.has(item.item_id) ? (
-                                      <Button
-                                        onClick={() => removeFromCart(item)}
-                                        disabled={addingItems.has(item.item_id)}
-                                        className="font-secondary text-xs md:text-sm px-2 md:px-4 bg-zinc-500 hover:bg-zinc-600 text-white flex-1"
-                                        size="sm"
-                                      >
-                                        {addingItems.has(item.item_id) ? (
-                                          <>
-                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                            Removing
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Trash2 className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                                            Remove
-                                          </>
-                                        )}
-                                      </Button>
+                                      <>
+                                        {/* Quantity Controls (LEFT) */}
+                                        <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
+                                          <button
+                                            onClick={() => decreaseQuantity(item)}
+                                            className="p-1 hover:bg-zinc-200 rounded"
+                                            disabled={getItemQuantity(item.item_id) <= 1}
+                                          >
+                                            <ChevronDown className="h-4 w-4 text-zinc-600" />
+                                          </button>
+                                          <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">
+                                            {getItemQuantity(item.item_id)}
+                                          </span>
+                                          <button
+                                            onClick={() => increaseQuantity(item)}
+                                            className="p-1 hover:bg-zinc-200 rounded"
+                                          >
+                                            <ChevronUp className="h-4 w-4 text-zinc-600" />
+                                          </button>
+                                        </div>
+
+                                        {/* Trash icon (RIGHT) */}
+                                        <Button
+                                          onClick={() => removeFromCart(item)}
+                                          disabled={addingItems.has(item.item_id)}
+                                          variant="outline"
+                                          size="icon"
+                                          className="h-9 w-9 md:h-10 md:w-10 border-zinc-300 text-zinc-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                                          aria-label={`Remove ${item.name} from cart`}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </>
                                     ) : (
                                       <Button
                                         onClick={() => addToCart(item)}
                                         disabled={addingItems.has(item.item_id)}
-                                        className="font-secondary text-xs px-2 bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                                        className="font-secondary text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full"
                                         size="sm"
                                       >
                                         {addingItems.has(item.item_id) ? (
@@ -402,9 +442,7 @@ const HomePage = ({ user: initialUser }) => {
                                             Adding
                                           </>
                                         ) : (
-                                          <>
-                                            Add {getItemQuantity(item.item_id)}
-                                          </>
+                                          <>Add to Cart</>
                                         )}
                                       </Button>
                                     )}
