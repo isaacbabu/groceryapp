@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Menu, Plus, Trash2, Search, LogOut, User, ShoppingBag, Info, LayoutDashboard, Phone, MapPin, X, Pencil, ChevronUp, ShoppingCart } from 'lucide-react';
+import { Home, Menu, Plus, Trash2, Search, LogOut, User, ShoppingBag, Info, LayoutDashboard, Phone, MapPin, X, Pencil, ChevronUp, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -354,31 +354,43 @@ const BillingPage = ({ user: initialUser }) => {
           <SheetHeader className="p-6 border-b border-zinc-200">
             <SheetTitle className="font-primary text-xl font-bold text-emerald-950">Menu</SheetTitle>
           </SheetHeader>
-          <nav className="p-4 space-y-2">
-            <Button data-testid="nav-home-btn" onClick={() => navigate('/')} variant="ghost" className="w-full justify-start font-secondary">
-              <ShoppingCart className="mr-2 h-4 w-4" /> Home
-            </Button>
-            <Button data-testid="nav-your-order-btn" onClick={() => navigate('/your-order')} variant="ghost" className="w-full justify-start font-secondary bg-emerald-50 text-emerald-700">
-              <ShoppingBag className="mr-2 h-4 w-4" /> Your Order
-            </Button>
-            <Button data-testid="nav-profile-btn" onClick={() => navigate('/profile')} variant="ghost" className="w-full justify-start font-secondary">
-              <User className="mr-2 h-4 w-4" /> User Profile
-            </Button>
-            <Button data-testid="nav-orders-btn" onClick={() => navigate('/orders')} variant="ghost" className="w-full justify-start font-secondary">
-              <ShoppingBag className="mr-2 h-4 w-4" /> Placed Orders
-            </Button>
-            <Button data-testid="nav-about-btn" onClick={() => navigate('/about')} variant="ghost" className="w-full justify-start font-secondary">
-              <Info className="mr-2 h-4 w-4" /> About App
-            </Button>
-            {user?.is_admin && (
-              <Button data-testid="nav-admin-btn" onClick={() => navigate('/admin')} variant="ghost" className="w-full justify-start font-secondary">
-                <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Dashboard
-              </Button>
-            )}
-            <Button data-testid="logout-btn" onClick={handleLogout} variant="ghost" className="w-full justify-start text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-secondary">
-              <LogOut className="mr-2 h-4 w-4" /> Logout
-            </Button>
-          </nav>
+             <nav className="p-4 space-y-2">
+                {/* 1. Home */}
+                <Button data-testid="nav-home-btn" onClick={() => navigate('/')} variant="ghost" className="w-full justify-start font-secondary">
+                  <Home className="mr-2 h-4 w-4" /> Home
+                </Button>
+
+                {/* 2. My Cart */}
+                <Button data-testid="nav-your-order-btn" onClick={() => navigate('/your-order')} variant="ghost" className="w-full justify-start font-secondary">
+                  <ShoppingCart className="mr-2 h-4 w-4" /> My Cart
+                </Button>
+
+                {/* 3. Placed Order */}
+                <Button data-testid="nav-orders-btn" onClick={() => navigate('/orders')} variant="ghost" className="w-full justify-start font-secondary">
+                  <ShoppingBag className="mr-2 h-4 w-4" /> Placed Order
+                </Button>
+
+                {/* 4. Your Profile */}
+                <Button data-testid="nav-profile-btn" onClick={() => navigate('/profile')} variant="ghost" className="w-full justify-start font-secondary">
+                  <User className="mr-2 h-4 w-4" /> Your Profile
+                </Button>
+
+                {/* 5. About App */}
+                <Button data-testid="nav-about-btn" onClick={() => navigate('/about')} variant="ghost" className="w-full justify-start font-secondary">
+                  <Info className="mr-2 h-4 w-4" /> About App
+                </Button>
+
+                {/* 6. Admin Dashboard */}
+                {user?.is_admin && (
+                  <Button data-testid="nav-admin-btn" onClick={() => navigate('/admin')} variant="ghost" className="w-full justify-start font-secondary">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Dashboard
+                  </Button>
+                )}
+
+                <Button data-testid="logout-btn" onClick={handleLogout} variant="ghost" className="w-full justify-start text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-secondary mt-4">
+                  <LogOut className="mr-2 h-4 w-4" /> Logout
+                </Button>
+             </nav>
         </SheetContent>
 
         {/* Main Content */}
