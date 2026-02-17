@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
 import { Menu, LogOut, User, ShoppingBag, Info, LayoutDashboard, Search, ChevronUp, ChevronDown, Trash2, LogIn } from 'lucide-react';
@@ -8,10 +8,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
-// CHANGE: Removed { user: initialUser } prop as it's no longer passed by ProtectedRoute
 const HomePage = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null); // Default to null (Guest)
+  const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,50 +19,7 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [itemQuantities, setItemQuantities] = useState({});
 
-  useEffect(() => {
-    checkAuthAndLoadData();
-  }, []);
-
-  // CHANGE: New function to check auth status silently
-  const checkAuthAndLoadData = async () => {
-    try {
-      // 1. Try to get user
-      const authResponse = await axiosInstance.get('/auth/me');
-      const currentUser = authResponse.data;
-      setUser(currentUser);
-      
-      // 2. If user exists, load their cart
-      if (currentUser) {
-        loadCartItems();
-      }
-    } catch (error) {
-      // User is not logged in (Guest mode) - Do nothing, just stay null
-      console.log("Guest user - viewing public catalog");
-    } finally {
-      // 3. Always load products (Public)
-      fetchItems();
-      fetchCategories();
-    }
-  };
-
-  // CHANGE: Login Logic (Copied from LoginPage) to trigger on Add to Cart
-  const handleLogin = () => {
-    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/auth/callback`; // Takes them back to App, which loads Home
-
-    const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
-    const params = new URLSearchParams({
-      client_id: clientId,
-      redirect_uri: redirectUri,
-      response_type: "id_token",
-      scope: "openid email profile",
-      nonce: Math.random().toString(36).substring(2),
-      prompt: "select_account",
-    });
-
-    window.location.href = `${googleAuthUrl}?${params.toString()}`;
-  };
-
+  // 1. Move helper functions ABOVE checkAuthAndLoadData so they can be called
   const fetchItems = async () => {
     try {
       const response = await axiosInstance.get('/items?limit=500');
@@ -104,6 +60,50 @@ const HomePage = () => {
     } catch (error) {
       console.error('Failed to load cart items');
     }
+  };
+
+  // 2. Wrap checkAuthAndLoadData in useCallback to fix the ESLint error
+  const checkAuthAndLoadData = useCallback(async () => {
+    try {
+      // 1. Try to get user
+      const authResponse = await axiosInstance.get('/auth/me');
+      const currentUser = authResponse.data;
+      setUser(currentUser);
+      
+      // 2. If user exists, load their cart
+      if (currentUser) {
+        loadCartItems();
+      }
+    } catch (error) {
+      // User is not logged in (Guest mode) - Do nothing
+      console.log("Guest user - viewing public catalog");
+    } finally {
+      // 3. Always load products (Public)
+      fetchItems();
+      fetchCategories();
+    }
+  }, []); // Empty array means this function never changes
+
+  // 3. Add the dependency to useEffect
+  useEffect(() => {
+    checkAuthAndLoadData();
+  }, [checkAuthAndLoadData]);
+
+  const handleLogin = () => {
+    const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    const redirectUri = `${window.location.origin}/auth/callback`;
+
+    const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "id_token",
+      scope: "openid email profile",
+      nonce: Math.random().toString(36).substring(2),
+      prompt: "select_account",
+    });
+
+    window.location.href = `${googleAuthUrl}?${params.toString()}`;
   };
 
   const getItemQuantity = (itemId) => {
@@ -155,10 +155,9 @@ const HomePage = () => {
   };
 
   const addToCart = async (item) => {
-    // CHANGE: Check if user is logged in before adding to cart
     if (!user) {
       toast.info("Please sign in to add items to cart");
-      handleLogin(); // Trigger Google Sign-In
+      handleLogin();
       return;
     }
 
@@ -225,8 +224,8 @@ const HomePage = () => {
     try {
       await axiosInstance.post('/auth/logout');
       toast.success('Logged out successfully');
-      setUser(null); // Clear local user
-      setAddedItems(new Set()); // Clear local cart view
+      setUser(null);
+      setAddedItems(new Set());
     } catch (error) {
       toast.error('Logout failed');
     }
@@ -252,7 +251,6 @@ const HomePage = () => {
             <Button onClick={() => navigate('/')} variant="ghost" className="w-full justify-start font-secondary bg-emerald-50 text-emerald-700">
               <ShoppingBag className="mr-2 h-4 w-4" /> Home
             </Button>
-            {/* CHANGE: Hide restricted menu items if guest */}
             {user && (
               <>
                 <Button onClick={() => navigate('/your-order')} variant="ghost" className="w-full justify-start font-secondary">
@@ -275,7 +273,6 @@ const HomePage = () => {
               </Button>
             )}
             
-            {/* CHANGE: Show Login or Logout based on user state */}
             {user ? (
               <Button onClick={handleLogout} variant="ghost" className="w-full justify-start text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-secondary">
                 <LogOut className="mr-2 h-4 w-4" /> Logout
@@ -303,7 +300,6 @@ const HomePage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                {/* CHANGE: View Cart also triggers login if guest */}
                 <Button 
                   onClick={() => user ? navigate('/your-order') : handleLogin()} 
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary"
@@ -314,7 +310,6 @@ const HomePage = () => {
                 </Button>
                 <div className="text-right hidden md:block">
                   <p className="text-xs text-emerald-200 uppercase tracking-widest font-primary font-bold">User</p>
-                  {/* CHANGE: Show Guest if not logged in */}
                   <p className="text-sm font-medium text-white font-secondary">{user ? user.name : "Guest"}</p>
                 </div>
               </div>
