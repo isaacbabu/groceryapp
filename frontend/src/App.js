@@ -29,7 +29,11 @@ function AppRouter() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      
+      {/* CHANGE 1: Remove ProtectedRoute from HomePage */}
+      <Route path="/" element={<HomePage />} /> 
+
+      {/* Keep other routes protected */}
       <Route path="/your-order" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><PlacedOrders /></ProtectedRoute>} />
