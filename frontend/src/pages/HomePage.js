@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Menu, LogOut, User, ShoppingBag, Info, LayoutDashboard, Search, ChevronUp, ChevronDown, Trash2, LogIn } from 'lucide-react';
+import { Menu, LogOut, User, ShoppingBag, ShoppingCart, Info, LayoutDashboard, Search, ChevronUp, ChevronDown, Trash2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
