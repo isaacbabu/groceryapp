@@ -41,7 +41,6 @@ class SimpleCache:
         self.timestamps = {}
     
     def get(self, key: str, ttl_seconds: int = 300):
-        """Get cached value if it exists and hasn't expired"""
         if key in self.cache:
             if datetime.now().timestamp() - self.timestamps[key] < ttl_seconds:
                 return self.cache[key]
@@ -51,18 +50,15 @@ class SimpleCache:
         return None
     
     def set(self, key: str, value):
-        """Set cache value with current timestamp"""
         self.cache[key] = value
         self.timestamps[key] = datetime.now().timestamp()
     
     def invalidate(self, key: str):
-        """Invalidate specific cache key"""
         if key in self.cache:
             del self.cache[key]
             del self.timestamps[key]
     
     def clear(self):
-        """Clear all cache"""
         self.cache.clear()
         self.timestamps.clear()
 
@@ -83,7 +79,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global exception handler for unhandled errors
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}", exc_info=True)
@@ -110,7 +105,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": errors, "body": str(exc.body)[:500]}
     )
 
-# Constants for validation
 MAX_STRING_LENGTH = 500
 MAX_ADDRESS_LENGTH = 1000
 MAX_ITEMS_PER_ORDER = 100
@@ -158,6 +152,9 @@ class UserProfileUpdate(BaseModel):
     @classmethod
     def validate_address(cls, v):
         return sanitize_string(v, MAX_ADDRESS_LENGTH)
+
+class AdminRoleCreate(BaseModel):
+    email: str = Field(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 class Item(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -252,7 +249,6 @@ class Cart(BaseModel):
 class CartUpdate(BaseModel):
     items: List[CartItem] = Field(..., max_length=MAX_ITEMS_PER_CART)
 
-# Helper function to get user from cookie or header
 async def get_current_user(request: Request, session_token: Optional[str] = Cookie(None)) -> User:
     token = session_token
     if not token:
@@ -261,12 +257,10 @@ async def get_current_user(request: Request, session_token: Optional[str] = Cook
             token = auth_header.split(' ')[1]
     
     if not token:
-        logger.warning("Auth failed: No session token provided in cookie or header.")
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     session_doc = await db.user_sessions.find_one({"session_token": token}, {"_id": 0})
     if not session_doc:
-        logger.warning(f"Auth failed: Invalid or missing session token: {token[:10]}...")
         raise HTTPException(status_code=401, detail="Invalid session")
     
     expires_at = session_doc["expires_at"]
@@ -275,12 +269,10 @@ async def get_current_user(request: Request, session_token: Optional[str] = Cook
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     if expires_at < datetime.now(timezone.utc):
-        logger.warning(f"Auth failed: Session expired for user {session_doc.get('user_id')} at {expires_at}")
         raise HTTPException(status_code=401, detail="Session expired")
     
     user_doc = await db.users.find_one({"user_id": session_doc["user_id"]}, {"_id": 0})
     if not user_doc:
-        logger.error(f"Auth failed: Session exists but user document not found for user_id {session_doc['user_id']}")
         raise HTTPException(status_code=404, detail="User not found")
     
     if isinstance(user_doc['created_at'], str):
@@ -292,25 +284,20 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+SUPER_ADMIN_EMAILS = ["isaac.babu.personal@gmail.com"]
 
-# Auth endpoints
 @api_router.post("/auth/session")
 async def create_session(request: Request, response: Response):
     try:
         body = await request.json()
     except Exception as e:
-        logger.error(f"/auth/session Failed to parse JSON body: {str(e)}")
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
     id_token_str = body.get("id_token")
     if not id_token_str:
-        logger.error("/auth/session Request missing 'id_token' in body")
         raise HTTPException(status_code=400, detail="id_token required")
 
     try:
-        logger.info(f"Attempting to verify token with GOOGLE_CLIENT_ID starting with: {GOOGLE_CLIENT_ID[:15] if GOOGLE_CLIENT_ID else 'None'}")
-        
-        # Verify the ID token with Google (allowing 10 seconds of clock skew)
         idinfo = id_token.verify_oauth2_token(
             id_token_str,
             google_requests.Request(),
@@ -320,31 +307,26 @@ async def create_session(request: Request, response: Response):
         user_email = idinfo["email"]
         user_name = idinfo.get("name", "")
         user_picture = idinfo.get("picture", "")
-        logger.info(f"Token verified successfully for email: {user_email}")
         
     except ValueError as ve:
-        # ValueError is specifically raised by google.oauth2.id_token for validation failures
         logger.error(f"Google Token Verification ValueError: {str(ve)}")
         raise HTTPException(status_code=400, detail=f"Invalid ID token: {str(ve)}")
     except Exception as e:
-        logger.error(f"Unexpected error during token verification: {str(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Authentication error: {str(e)}")
-
-    # Admin emails list
-    ADMIN_EMAILS = ["isaac.babu.personal@gmail.com"]
 
     try:
         existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
         if existing_user:
             user_id = existing_user["user_id"]
-            is_admin = user_email in ADMIN_EMAILS
+            # Preserve existing admin status, or override if they are a super admin
+            is_admin = existing_user.get("is_admin", False) or (user_email in SUPER_ADMIN_EMAILS)
             await db.users.update_one(
                 {"user_id": user_id},
                 {"$set": {"name": user_name, "picture": user_picture, "is_admin": is_admin}}
             )
         else:
             user_id = f"user_{uuid.uuid4().hex[:12]}"
-            is_admin = user_email in ADMIN_EMAILS
+            is_admin = user_email in SUPER_ADMIN_EMAILS
             await db.users.insert_one({
                 "user_id": user_id,
                 "email": user_email,
@@ -356,7 +338,6 @@ async def create_session(request: Request, response: Response):
                 "created_at": datetime.now(timezone.utc)
             })
 
-        # Create a new session token
         session_token = f"session_{uuid.uuid4().hex}"
         await db.user_sessions.insert_one({
             "user_id": user_id,
@@ -365,7 +346,6 @@ async def create_session(request: Request, response: Response):
             "created_at": datetime.now(timezone.utc)
         })
 
-        # Set cookie
         response.set_cookie(
             key="session_token",
             value=session_token,
@@ -396,11 +376,10 @@ async def logout(request: Request, response: Response, session_token: Optional[s
         try:
             await db.user_sessions.delete_one({"session_token": session_token})
         except Exception as e:
-            logger.error(f"Error deleting session during logout: {str(e)}")
+            pass
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out"}
 
-# User profile endpoints
 @api_router.get("/user/profile")
 async def get_profile(request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -424,7 +403,6 @@ async def update_profile(profile: UserProfileUpdate, request: Request, session_t
     
     return User(**updated_user)
 
-# Items endpoints
 @api_router.get("/items", response_model=List[Item])
 async def get_items(page: int = 1, limit: int = 100):
     if page < 1: page = 1
@@ -445,7 +423,6 @@ async def get_items(page: int = 1, limit: int = 100):
         cache.set(cache_key, items)
         return items
     except Exception as e:
-        logger.error(f"Error fetching items: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch items")
 
 @api_router.post("/admin/items", response_model=Item)
@@ -507,7 +484,6 @@ async def delete_item(item_id: str, request: Request, session_token: Optional[st
     cache.clear()
     return {"message": "Item deleted"}
 
-# Cart endpoints
 @api_router.get("/cart")
 async def get_cart(request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -590,7 +566,6 @@ async def seed_sample_items():
         
         return {"message": f"Successfully seeded {len(sample_items)} items and {len(default_categories)} categories"}
     except Exception as e:
-        logger.error(f"Error seeding items: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to seed items")
 
 @api_router.get("/categories")
@@ -612,7 +587,6 @@ async def get_categories():
         cache.set(cache_key, result)
         return result
     except Exception as e:
-        logger.error(f"Error fetching categories: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch categories")
 
 class CategoryCreate(BaseModel):
@@ -682,6 +656,54 @@ async def delete_category(category_id: str, request: Request, session_token: Opt
     await db.categories.delete_one({"category_id": category_id})
     cache.clear()
     return {"message": "Category deleted successfully"}
+
+# --- ROLES MANAGEMENT ENDPOINTS ---
+
+@api_router.get("/admin/roles")
+async def get_admins(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    admins = await db.users.find({"is_admin": True}, {"_id": 0, "user_id": 1, "name": 1, "email": 1}).to_list(100)
+    return admins
+
+@api_router.post("/admin/roles")
+async def add_admin(role_data: AdminRoleCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    target_user = await db.users.find_one({"email": role_data.email})
+    if not target_user:
+        # The user hasn't logged in with Google yet.
+        raise HTTPException(status_code=404, detail="User not found. They must log in to the app at least once before they can be made an admin.")
+    
+    if target_user.get("is_admin"):
+        raise HTTPException(status_code=400, detail="User is already an admin.")
+        
+    await db.users.update_one({"email": role_data.email}, {"$set": {"is_admin": True}})
+    return {"message": "Admin added successfully"}
+
+@api_router.delete("/admin/roles/{user_id}")
+async def remove_admin(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    target_user = await db.users.find_one({"user_id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if target_user["email"] in SUPER_ADMIN_EMAILS:
+        raise HTTPException(status_code=400, detail="Cannot revoke permissions from the Super Admin.")
+        
+    if target_user["user_id"] == user.user_id:
+        raise HTTPException(status_code=400, detail="You cannot revoke your own admin permissions.")
+        
+    await db.users.update_one({"user_id": user_id}, {"$set": {"is_admin": False}})
+    return {"message": "Admin revoked successfully"}
+
 
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate, request: Request, session_token: Optional[str] = Cookie(None)):
@@ -791,12 +813,9 @@ app.include_router(api_router)
 
 @app.on_event("startup")
 async def startup_db_client():
-    """Create database indexes on startup for better performance"""
     try:
-        # Ping the DB first to ensure connection is actually alive
         await client.admin.command('ping')
-        logger.info("Successfully connected to MongoDB.")
-
+        
         await db.items.create_index("item_id", unique=True)
         await db.items.create_index("category")
         await db.items.create_index("name")
@@ -813,7 +832,6 @@ async def startup_db_client():
         await db.user_sessions.create_index("session_token", unique=True)
         await db.user_sessions.create_index("expires_at", expireAfterSeconds=0)
         
-        logger.info("Database indexes created successfully")
     except Exception as e:
         logger.error(f"Error during startup or creating indexes: {e}", exc_info=True)
 
