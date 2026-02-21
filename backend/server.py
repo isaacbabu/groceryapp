@@ -15,17 +15,24 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import requests
 import asyncio
+import traceback
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ.get('MONGO_URL')
+if not mongo_url:
+    logger.error("MONGO_URL environment variable is missing!")
+
 client = AsyncIOMotorClient(mongo_url, maxPoolSize=50, minPoolSize=10)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'groceryapp')]
 
 # Simple in-memory cache with TTL
 class SimpleCache:
@@ -34,39 +41,32 @@ class SimpleCache:
         self.timestamps = {}
     
     def get(self, key: str, ttl_seconds: int = 300):
-        """Get cached value if it exists and hasn't expired"""
         if key in self.cache:
-            # Check if cache is still valid
             if datetime.now().timestamp() - self.timestamps[key] < ttl_seconds:
                 return self.cache[key]
             else:
-                # Cache expired, remove it
                 del self.cache[key]
                 del self.timestamps[key]
         return None
     
     def set(self, key: str, value):
-        """Set cache value with current timestamp"""
         self.cache[key] = value
         self.timestamps[key] = datetime.now().timestamp()
     
     def invalidate(self, key: str):
-        """Invalidate specific cache key"""
         if key in self.cache:
             del self.cache[key]
             del self.timestamps[key]
     
     def clear(self):
-        """Clear all cache"""
         self.cache.clear()
         self.timestamps.clear()
 
-# Initialize cache
 cache = SimpleCache()
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
-frontend_url = os.getenv("FRONTEND_URL")  # set in Heroku config vars
+frontend_url = os.getenv("FRONTEND_URL")
 custom_domain = os.getenv("CUSTOM_DOMAIN", "https://emmanuelsupermarket.in")
 
 origins = [o for o in [frontend_url, "http://localhost:3000", custom_domain] if o]
@@ -79,10 +79,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add validation error handler for detailed logging
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Check server logs."}
+    )
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    # Convert errors to serializable format
     errors = []
     for error in exc.errors():
         err_dict = {
@@ -93,14 +99,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         }
         errors.append(err_dict)
     
-    logger.error(f"Validation error: {errors}")
-    logger.error(f"Request body: {exc.body}")
+    logger.error(f"Validation error on {request.url.path}: {errors}")
     return JSONResponse(
         status_code=422,
         content={"detail": errors, "body": str(exc.body)[:500]}
     )
 
-# Constants for validation
 MAX_STRING_LENGTH = 500
 MAX_ADDRESS_LENGTH = 1000
 MAX_ITEMS_PER_ORDER = 100
@@ -112,20 +116,15 @@ PHONE_REGEX = re.compile(r'^[\d\s\-\+\(\)]{7,20}$')
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 def sanitize_string(value: str, max_length: int = MAX_STRING_LENGTH) -> str:
-    """Sanitize string input - escape HTML and limit length"""
     if value is None:
         return None
-    # Strip whitespace, escape HTML entities, limit length
-    sanitized = html.escape(str(value).strip())[:max_length]
-    return sanitized
+    return html.escape(str(value).strip())[:max_length]
 
 def validate_phone(phone: str) -> bool:
-    """Validate phone number format"""
     if not phone:
         return True
     return bool(PHONE_REGEX.match(phone))
 
-# Models with validation
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
@@ -154,6 +153,9 @@ class UserProfileUpdate(BaseModel):
     def validate_address(cls, v):
         return sanitize_string(v, MAX_ADDRESS_LENGTH)
 
+class AdminRoleCreate(BaseModel):
+    email: str = Field(..., pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
 class Item(BaseModel):
     model_config = ConfigDict(extra="ignore")
     item_id: str
@@ -166,7 +168,7 @@ class Item(BaseModel):
 class ItemCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     rate: float = Field(..., gt=0, le=MAX_RATE)
-    image_url: str = Field(..., min_length=1, max_length=5000000)  # Allow large base64 images (up to ~3.5MB)
+    image_url: str = Field(..., min_length=1, max_length=5000000)
     category: str = Field(..., min_length=1, max_length=100)
     
     @field_validator('name', 'category')
@@ -178,7 +180,6 @@ class ItemCreate(BaseModel):
     @classmethod
     def validate_image_url(cls, v):
         v = str(v).strip()
-        # Allow data URLs (base64) and http/https URLs
         if not (v.startswith('http://') or v.startswith('https://') or v.startswith('data:image/')):
             raise ValueError('Invalid image URL format')
         return v
@@ -199,7 +200,6 @@ class OrderItem(BaseModel):
     def validate_total(self):
         expected_total = round(self.rate * self.quantity, 2)
         if abs(self.total - expected_total) > 0.01:
-            # Auto-correct the total instead of rejecting
             self.total = expected_total
         return self
 
@@ -224,7 +224,6 @@ class OrderCreate(BaseModel):
     def validate_grand_total(self):
         expected_total = round(sum(item.total for item in self.items), 2)
         if abs(self.grand_total - expected_total) > 0.01:
-            # Auto-correct the grand total
             self.grand_total = expected_total
         return self
 
@@ -250,7 +249,6 @@ class Cart(BaseModel):
 class CartUpdate(BaseModel):
     items: List[CartItem] = Field(..., max_length=MAX_ITEMS_PER_CART)
 
-# Helper function to get user from cookie or header
 async def get_current_user(request: Request, session_token: Optional[str] = Cookie(None)) -> User:
     token = session_token
     if not token:
@@ -286,79 +284,86 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+SUPER_ADMIN_EMAILS = ["isaac.babu.personal@gmail.com"]
 
-# Auth endpoints
 @api_router.post("/auth/session")
 async def create_session(request: Request, response: Response):
-    body = await request.json()
-    id_token_str = body.get("id_token")
+    try:
+        body = await request.json()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
 
+    id_token_str = body.get("id_token")
     if not id_token_str:
         raise HTTPException(status_code=400, detail="id_token required")
 
     try:
-        # Verify the ID token with Google
         idinfo = id_token.verify_oauth2_token(
             id_token_str,
             google_requests.Request(),
-            GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=10
         )
         user_email = idinfo["email"]
         user_name = idinfo.get("name", "")
         user_picture = idinfo.get("picture", "")
+        
+    except ValueError as ve:
+        logger.error(f"Google Token Verification ValueError: {str(ve)}")
+        raise HTTPException(status_code=400, detail=f"Invalid ID token: {str(ve)}")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid ID token: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Authentication error: {str(e)}")
 
-    # Admin emails list
-    ADMIN_EMAILS = ["isaac.babu.personal@gmail.com"]
+    try:
+        existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
+        if existing_user:
+            user_id = existing_user["user_id"]
+            # Preserve existing admin status, or override if they are a super admin
+            is_admin = existing_user.get("is_admin", False) or (user_email in SUPER_ADMIN_EMAILS)
+            await db.users.update_one(
+                {"user_id": user_id},
+                {"$set": {"name": user_name, "picture": user_picture, "is_admin": is_admin}}
+            )
+        else:
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
+            is_admin = user_email in SUPER_ADMIN_EMAILS
+            await db.users.insert_one({
+                "user_id": user_id,
+                "email": user_email,
+                "name": user_name,
+                "picture": user_picture,
+                "phone_number": None,
+                "home_address": None,
+                "is_admin": is_admin,
+                "created_at": datetime.now(timezone.utc)
+            })
 
-    existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
-    if existing_user:
-        user_id = existing_user["user_id"]
-        is_admin = user_email in ADMIN_EMAILS
-        await db.users.update_one(
-            {"user_id": user_id},
-            {"$set": {"name": user_name, "picture": user_picture, "is_admin": is_admin}}
-        )
-    else:
-        user_id = f"user_{uuid.uuid4().hex[:12]}"
-        is_admin = user_email in ADMIN_EMAILS
-        await db.users.insert_one({
+        session_token = f"session_{uuid.uuid4().hex}"
+        await db.user_sessions.insert_one({
             "user_id": user_id,
-            "email": user_email,
-            "name": user_name,
-            "picture": user_picture,
-            "phone_number": None,
-            "home_address": None,
-            "is_admin": is_admin,
+            "session_token": session_token,
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
             "created_at": datetime.now(timezone.utc)
         })
 
-    # Create a new session token
-    session_token = f"session_{uuid.uuid4().hex}"
-    await db.user_sessions.insert_one({
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
-        "created_at": datetime.now(timezone.utc)
-    })
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/",
+            max_age=7*24*60*60
+        )
 
-    # Set cookie
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        path="/",
-        max_age=7*24*60*60
-    )
+        user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+        if isinstance(user_doc["created_at"], str):
+            user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
 
-    user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    if isinstance(user_doc["created_at"], str):
-        user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
-
-    return {"user": User(**user_doc).model_dump(), "session_token": session_token}
+        return {"user": User(**user_doc).model_dump(), "session_token": session_token}
+    except Exception as e:
+        logger.error(f"Database error during session creation: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error during user creation")
 
 @api_router.get("/auth/me")
 async def get_me(request: Request, session_token: Optional[str] = Cookie(None)):
@@ -368,11 +373,13 @@ async def get_me(request: Request, session_token: Optional[str] = Cookie(None)):
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response, session_token: Optional[str] = Cookie(None)):
     if session_token:
-        await db.user_sessions.delete_one({"session_token": session_token})
+        try:
+            await db.user_sessions.delete_one({"session_token": session_token})
+        except Exception as e:
+            pass
     response.delete_cookie("session_token", path="/")
     return {"message": "Logged out"}
 
-# User profile endpoints
 @api_router.get("/user/profile")
 async def get_profile(request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -396,46 +403,27 @@ async def update_profile(profile: UserProfileUpdate, request: Request, session_t
     
     return User(**updated_user)
 
-# Items endpoints
 @api_router.get("/items", response_model=List[Item])
 async def get_items(page: int = 1, limit: int = 100):
-    """
-    Get items with pagination and caching
-    - page: page number (default: 1)
-    - limit: items per page (default: 100, max: 500)
-    - Cache TTL: 5 minutes
-    """
-    # Validate pagination parameters
-    if page < 1:
-        page = 1
-    if limit < 1:
-        limit = 10
-    if limit > 500:
-        limit = 500
+    if page < 1: page = 1
+    if limit < 1: limit = 10
+    if limit > 500: limit = 500
     
-    # Create cache key
     cache_key = f"items_page_{page}_limit_{limit}"
-    
-    # Check cache first
-    cached_items = cache.get(cache_key, ttl_seconds=300)  # 5 minutes TTL
+    cached_items = cache.get(cache_key, ttl_seconds=300)
     if cached_items is not None:
-        logger.info(f"Cache hit for {cache_key}")
         return cached_items
     
-    # Calculate skip value
     skip = (page - 1) * limit
-    
-    # Fetch items from database
-    logger.info(f"Cache miss for {cache_key}, fetching from database")
-    items = await db.items.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
-    for item in items:
-        if isinstance(item['created_at'], str):
-            item['created_at'] = datetime.fromisoformat(item['created_at'])
-    
-    # Store in cache
-    cache.set(cache_key, items)
-    
-    return items
+    try:
+        items = await db.items.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
+        for item in items:
+            if isinstance(item['created_at'], str):
+                item['created_at'] = datetime.fromisoformat(item['created_at'])
+        cache.set(cache_key, items)
+        return items
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch items")
 
 @api_router.post("/admin/items", response_model=Item)
 async def create_item(item: ItemCreate, request: Request, session_token: Optional[str] = Cookie(None)):
@@ -454,11 +442,7 @@ async def create_item(item: ItemCreate, request: Request, session_token: Optiona
     }
     
     await db.items.insert_one(item_doc)
-    
-    # Invalidate items and categories cache
     cache.clear()
-    logger.info("Cache cleared after adding new item")
-    
     return Item(**item_doc)
 
 @api_router.put("/admin/items/{item_id}", response_model=Item)
@@ -484,10 +468,7 @@ async def update_item(item_id: str, item: ItemCreate, request: Request, session_
     if isinstance(updated_item['created_at'], str):
         updated_item['created_at'] = datetime.fromisoformat(updated_item['created_at'])
     
-    # Invalidate cache
     cache.clear()
-    logger.info("Cache cleared after updating item")
-    
     return Item(**updated_item)
 
 @api_router.delete("/admin/items/{item_id}")
@@ -500,13 +481,9 @@ async def delete_item(item_id: str, request: Request, session_token: Optional[st
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
     
-    # Invalidate cache
     cache.clear()
-    logger.info("Cache cleared after deleting item")
-    
     return {"message": "Item deleted"}
 
-# Cart endpoints
 @api_router.get("/cart")
 async def get_cart(request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -520,7 +497,6 @@ async def get_cart(request: Request, session_token: Optional[str] = Cookie(None)
 @api_router.put("/cart")
 async def update_cart(cart_data: CartUpdate, request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
-    
     existing_cart = await db.carts.find_one({"user_id": user.user_id}, {"_id": 0})
     
     cart_doc = {
@@ -539,14 +515,12 @@ async def update_cart(cart_data: CartUpdate, request: Request, session_token: Op
         cart_doc["cart_id"] = f"cart_{uuid.uuid4().hex[:12]}"
         await db.carts.insert_one(cart_doc)
     
-    # Return a clean response without any MongoDB ObjectIds
     response = {
         "cart_id": cart_doc["cart_id"],
         "user_id": cart_doc["user_id"],
         "items": cart_doc["items"],
         "updated_at": cart_doc["updated_at"]
     }
-    
     return response
 
 @api_router.delete("/cart")
@@ -555,96 +529,66 @@ async def clear_cart(request: Request, session_token: Optional[str] = Cookie(Non
     await db.carts.delete_one({"user_id": user.user_id})
     return {"message": "Cart cleared"}
 
-# Seed sample items endpoint
 @api_router.post("/seed-items")
 async def seed_sample_items():
-    # Check if items already exist
-    existing_count = await db.items.count_documents({})
-    if existing_count > 0:
-        return {"message": f"Items already exist ({existing_count} items). Skipping seed."}
-    
-    sample_items = [
-        # Pulses
-        {"name": "Toor Dal (1kg)", "rate": 150.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1585996340258-c90e51a42c15?w=400"},
-        {"name": "Moong Dal (1kg)", "rate": 140.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1612257416648-ee7a6c533bc4?w=400"},
-        {"name": "Chana Dal (1kg)", "rate": 120.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1593001872095-7d5b3868fb1d?w=400"},
-        {"name": "Urad Dal (1kg)", "rate": 160.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1558818498-28c1e002674f?w=400"},
-        {"name": "Masoor Dal (1kg)", "rate": 130.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"},
-        # Rice
-        {"name": "Basmati Rice (5kg)", "rate": 450.00, "category": "Rice", "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"},
-        {"name": "Brown Rice (2kg)", "rate": 180.00, "category": "Rice", "image_url": "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400"},
-        {"name": "Sona Masoori Rice (5kg)", "rate": 380.00, "category": "Rice", "image_url": "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=400"},
-        {"name": "Jeera Rice (1kg)", "rate": 120.00, "category": "Rice", "image_url": "https://images.unsplash.com/photo-1596560548464-f010549b84d7?w=400"},
-        # Spices
-        {"name": "Turmeric Powder (200g)", "rate": 80.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400"},
-        {"name": "Red Chilli Powder (200g)", "rate": 90.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"},
-        {"name": "Coriander Powder (200g)", "rate": 60.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1599909533681-74f257a5096d?w=400"},
-        {"name": "Cumin Seeds (100g)", "rate": 70.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1599909533702-a30f5c7c1b3d?w=400"},
-        {"name": "Garam Masala (100g)", "rate": 95.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400"},
-        {"name": "Black Pepper (100g)", "rate": 120.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1599909533701-236f4c33a640?w=400"},
-    ]
-    
-    for item in sample_items:
-        item_doc = {
-            "item_id": f"item_{uuid.uuid4().hex[:12]}",
-            "name": item["name"],
-            "rate": item["rate"],
-            "image_url": item["image_url"],
-            "category": item["category"],
-            "created_at": datetime.now(timezone.utc)
-        }
-        await db.items.insert_one(item_doc)
-    
-    # Seed default categories
-    default_categories = ["Pulses", "Rice", "Spices"]
-    for cat in default_categories:
-        existing = await db.categories.find_one({"name": cat})
-        if not existing:
-            await db.categories.insert_one({
-                "category_id": f"cat_{uuid.uuid4().hex[:12]}",
-                "name": cat,
-                "is_default": True,
+    try:
+        existing_count = await db.items.count_documents({})
+        if existing_count > 0:
+            return {"message": f"Items already exist ({existing_count} items). Skipping seed."}
+        
+        sample_items = [
+            {"name": "Toor Dal (1kg)", "rate": 150.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1585996340258-c90e51a42c15?w=400"},
+            {"name": "Basmati Rice (5kg)", "rate": 450.00, "category": "Rice", "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"},
+            {"name": "Turmeric Powder (200g)", "rate": 80.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400"},
+        ]
+        
+        for item in sample_items:
+            item_doc = {
+                "item_id": f"item_{uuid.uuid4().hex[:12]}",
+                "name": item["name"],
+                "rate": item["rate"],
+                "image_url": item["image_url"],
+                "category": item["category"],
                 "created_at": datetime.now(timezone.utc)
-            })
-    
-    return {"message": f"Successfully seeded {len(sample_items)} items and {len(default_categories)} categories"}
+            }
+            await db.items.insert_one(item_doc)
+        
+        default_categories = ["Pulses", "Rice", "Spices"]
+        for cat in default_categories:
+            existing = await db.categories.find_one({"name": cat})
+            if not existing:
+                await db.categories.insert_one({
+                    "category_id": f"cat_{uuid.uuid4().hex[:12]}",
+                    "name": cat,
+                    "is_default": True,
+                    "created_at": datetime.now(timezone.utc)
+                })
+        
+        return {"message": f"Successfully seeded {len(sample_items)} items and {len(default_categories)} categories"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to seed items")
 
-# Get categories endpoint
 @api_router.get("/categories")
 async def get_categories():
-    """
-    Get all categories with caching
-    - Cache TTL: 5 minutes
-    """
     cache_key = "categories_list"
-    
-    # Check cache first
-    cached_categories = cache.get(cache_key, ttl_seconds=300)  # 5 minutes TTL
+    cached_categories = cache.get(cache_key, ttl_seconds=300)
     if cached_categories is not None:
-        logger.info("Cache hit for categories")
         return cached_categories
     
-    # Fetch from database
-    logger.info("Cache miss for categories, fetching from database")
-    
-    # Get categories from the categories collection (both default and custom)
-    categories_cursor = db.categories.find({}, {"_id": 0, "name": 1}).sort("name", 1)
-    categories_list = await categories_cursor.to_list(1000)
-    categories = [cat["name"] for cat in categories_list]
-    
-    # If no categories in collection, get from items (fallback)
-    if not categories:
-        categories = await db.items.distinct("category")
-    
-    # Always include "All" at the beginning
-    result = ["All"] + sorted(categories)
-    
-    # Store in cache
-    cache.set(cache_key, result)
-    
-    return result
+    try:
+        categories_cursor = db.categories.find({}, {"_id": 0, "name": 1}).sort("name", 1)
+        categories_list = await categories_cursor.to_list(1000)
+        categories = [cat["name"] for cat in categories_list]
+        
+        if not categories:
+            categories = await db.items.distinct("category")
+        
+        result = ["All"] + sorted(categories)
+        cache.set(cache_key, result)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch categories")
 
-# Category model for admin
 class CategoryCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     
@@ -652,7 +596,6 @@ class CategoryCreate(BaseModel):
     @classmethod
     def sanitize_name(cls, v):
         sanitized = sanitize_string(v, 100)
-        # Only allow alphanumeric, spaces, and common punctuation
         if not re.match(r'^[\w\s\-&]+$', sanitized):
             raise ValueError('Category name contains invalid characters')
         return sanitized
@@ -663,7 +606,6 @@ class Category(BaseModel):
     is_default: bool = False
     created_at: datetime
 
-# Admin category management endpoints
 @api_router.get("/admin/categories")
 async def get_admin_categories(request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -679,7 +621,6 @@ async def create_category(category: CategoryCreate, request: Request, session_to
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    # Check if category already exists (case-insensitive, escape regex special chars)
     escaped_name = re.escape(category.name)
     existing = await db.categories.find_one({"name": {"$regex": f"^{escaped_name}$", "$options": "i"}})
     if existing:
@@ -692,11 +633,7 @@ async def create_category(category: CategoryCreate, request: Request, session_to
         "created_at": datetime.now(timezone.utc)
     }
     await db.categories.insert_one(category_doc)
-    
-    # Invalidate cache
     cache.clear()
-    logger.info("Cache cleared after adding new category")
-    
     return {"category_id": category_doc["category_id"], "name": category.name, "is_default": False, "created_at": category_doc["created_at"]}
 
 @api_router.delete("/admin/categories/{category_id}")
@@ -705,29 +642,69 @@ async def delete_category(category_id: str, request: Request, session_token: Opt
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    # Find the category
     category = await db.categories.find_one({"category_id": category_id})
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # Don't allow deletion of default categories
     if category.get("is_default", False):
         raise HTTPException(status_code=400, detail="Cannot delete default categories")
     
-    # Check if any items use this category
     items_count = await db.items.count_documents({"category": category["name"]})
     if items_count > 0:
         raise HTTPException(status_code=400, detail=f"Cannot delete category. {items_count} items are using this category.")
     
     await db.categories.delete_one({"category_id": category_id})
-    
-    # Invalidate cache
     cache.clear()
-    logger.info("Cache cleared after deleting category")
-    
     return {"message": "Category deleted successfully"}
 
-# Orders endpoints
+# --- ROLES MANAGEMENT ENDPOINTS ---
+
+@api_router.get("/admin/roles")
+async def get_admins(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    admins = await db.users.find({"is_admin": True}, {"_id": 0, "user_id": 1, "name": 1, "email": 1}).to_list(100)
+    return admins
+
+@api_router.post("/admin/roles")
+async def add_admin(role_data: AdminRoleCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    target_user = await db.users.find_one({"email": role_data.email})
+    if not target_user:
+        # The user hasn't logged in with Google yet.
+        raise HTTPException(status_code=404, detail="User not found. They must log in to the app at least once before they can be made an admin.")
+    
+    if target_user.get("is_admin"):
+        raise HTTPException(status_code=400, detail="User is already an admin.")
+        
+    await db.users.update_one({"email": role_data.email}, {"$set": {"is_admin": True}})
+    return {"message": "Admin added successfully"}
+
+@api_router.delete("/admin/roles/{user_id}")
+async def remove_admin(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    target_user = await db.users.find_one({"user_id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if target_user["email"] in SUPER_ADMIN_EMAILS:
+        raise HTTPException(status_code=400, detail="Cannot revoke permissions from the Super Admin.")
+        
+    if target_user["user_id"] == user.user_id:
+        raise HTTPException(status_code=400, detail="You cannot revoke your own admin permissions.")
+        
+    await db.users.update_one({"user_id": user_id}, {"$set": {"is_admin": False}})
+    return {"message": "Admin revoked successfully"}
+
+
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate, request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -757,7 +734,6 @@ async def get_user_orders(request: Request, session_token: Optional[str] = Cooki
     for order in orders:
         if isinstance(order['created_at'], str):
             order['created_at'] = datetime.fromisoformat(order['created_at'])
-    
     return orders
 
 @api_router.put("/orders/{order_id}", response_model=Order)
@@ -771,11 +747,10 @@ async def update_order(order_id: str, order_update: OrderCreate, request: Reques
     if existing_order['user_id'] != user.user_id and not user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    # Update the order with new items and grand total
     update_data = {
         "items": [item.model_dump() for item in order_update.items],
         "grand_total": order_update.grand_total,
-        "status": "Pending",  # Reset status to pending when edited
+        "status": "Pending",
         "updated_at": datetime.now(timezone.utc)
     }
     
@@ -787,7 +762,6 @@ async def update_order(order_id: str, order_update: OrderCreate, request: Reques
     updated_order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if isinstance(updated_order['created_at'], str):
         updated_order['created_at'] = datetime.fromisoformat(updated_order['created_at'])
-    
     return Order(**updated_order)
 
 @api_router.delete("/orders/{order_id}")
@@ -804,7 +778,6 @@ async def delete_order(order_id: str, request: Request, session_token: Optional[
     await db.orders.delete_one({"order_id": order_id})
     return {"message": "Order deleted"}
 
-# Admin endpoints
 @api_router.get("/admin/orders", response_model=List[Order])
 async def get_all_orders(request: Request, session_token: Optional[str] = Cookie(None)):
     user = await get_current_user(request, session_token)
@@ -812,11 +785,9 @@ async def get_all_orders(request: Request, session_token: Optional[str] = Cookie
         raise HTTPException(status_code=403, detail="Admin access required")
     
     orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
-    
     for order in orders:
         if isinstance(order['created_at'], str):
             order['created_at'] = datetime.fromisoformat(order['created_at'])
-    
     return orders
 
 @api_router.patch("/admin/orders/{order_id}/confirm")
@@ -836,55 +807,34 @@ async def confirm_order(order_id: str, request: Request, session_token: Optional
     updated_order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})
     if isinstance(updated_order['created_at'], str):
         updated_order['created_at'] = datetime.fromisoformat(updated_order['created_at'])
-    
     return Order(**updated_order)
 
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
 @app.on_event("startup")
 async def startup_db_client():
-    """Create database indexes on startup for better performance"""
     try:
-        # Items collection indexes
+        await client.admin.command('ping')
+        
         await db.items.create_index("item_id", unique=True)
         await db.items.create_index("category")
         await db.items.create_index("name")
         
-        # Users collection indexes
         await db.users.create_index("user_id", unique=True)
         await db.users.create_index("email", unique=True)
         
-        # Orders collection indexes
         await db.orders.create_index("order_id", unique=True)
         await db.orders.create_index("user_id")
         await db.orders.create_index([("user_id", 1), ("created_at", -1)])
         
-        # Cart collection indexes
-        await db.cart.create_index("user_id", unique=True)
+        await db.carts.create_index("user_id", unique=True)
         
-        # Sessions collection indexes
-        await db.sessions.create_index("session_token", unique=True)
-        await db.sessions.create_index("expires_at", expireAfterSeconds=0)
+        await db.user_sessions.create_index("session_token", unique=True)
+        await db.user_sessions.create_index("expires_at", expireAfterSeconds=0)
         
-        logger.info("Database indexes created successfully")
     except Exception as e:
-        logger.error(f"Error creating indexes: {e}")
+        logger.error(f"Error during startup or creating indexes: {e}", exc_info=True)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
-app.include_router(api_router)

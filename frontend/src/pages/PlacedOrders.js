@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { ArrowLeft, Trash2, Package, Pencil } from 'lucide-react';
+import { ArrowLeft, Package, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import Layout from '@/components/Layout';
 
 const PlacedOrders = ({ user }) => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [deleteOrderId, setDeleteOrderId] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -30,19 +26,24 @@ const PlacedOrders = ({ user }) => {
     }
   };
 
-  const handleDelete = async (orderId) => {
+  const handleEditOrder = async (order) => {
     try {
-      await axiosInstance.delete(`/orders/${orderId}`);
-      setOrders(orders.filter(order => order.order_id !== orderId));
-      toast.success('Order deleted successfully');
-      setDeleteOrderId(null);
-    } catch (error) {
-      toast.error('Failed to delete order');
-    }
-  };
+      // 1. Delete the existing order
+      await axiosInstance.delete(`/orders/${order.order_id}`);
+      
+      // 2. Put the order items into the cart
+      await axiosInstance.put('/cart', { items: order.items });
 
-  const handleEditOrder = (order) => {
-    navigate('/your-order', { state: { editOrder: { order_id: order.order_id, items: order.items } } });
+      // 3. Remove from local state
+      setOrders(orders.filter(o => o.order_id !== order.order_id));
+      
+      toast.success('Order moved to cart for editing');
+      
+      // 4. Navigate to cart
+      navigate('/your-order');
+    } catch (error) {
+      toast.error('Failed to edit order');
+    }
   };
 
   if (loading) {
@@ -128,12 +129,9 @@ const PlacedOrders = ({ user }) => {
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-center gap-3">
+                    <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-center">
                       <Button data-testid={`edit-order-btn-${order.order_id}`} onClick={() => handleEditOrder(order)} variant="outline" className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary">
                         <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                      </Button>
-                      <Button data-testid={`delete-order-btn-${order.order_id}`} onClick={() => setDeleteOrderId(order.order_id)} variant="outline" className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Order
                       </Button>
                     </div>
                   </div>
@@ -142,19 +140,6 @@ const PlacedOrders = ({ user }) => {
             </div>
           )}
         </div>
-
-        <AlertDialog open={!!deleteOrderId} onOpenChange={() => setDeleteOrderId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Order</AlertDialogTitle>
-              <AlertDialogDescription>Are you sure you want to delete this order? This action cannot be undone.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDelete(deleteOrderId)} className="bg-rose-600 hover:bg-rose-700">Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </Layout>
   );

@@ -67,11 +67,6 @@ const UserProfile = ({ user: initialUser }) => {
 
           <div className="p-8 space-y-6">
             <div>
-              <Label className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">User ID</Label>
-              <Input data-testid="user-id-input" value={user?.user_id || ''} disabled className="bg-zinc-50 font-mono text-zinc-600" />
-            </div>
-
-            <div>
               <Label htmlFor="phone" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center">
                 <Phone className="h-4 w-4 mr-2" /> Phone Number *
               </Label>

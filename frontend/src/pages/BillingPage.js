@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Plus, Trash2, Search, Phone, MapPin, X, Pencil } from 'lucide-react';
+import { Plus, Trash2, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,32 +11,17 @@ import Layout from '@/components/Layout';
 
 const BillingPage = ({ user: initialUser }) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [user, setUser] = useState(initialUser);
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Rice');
   const [billingRows, setBillingRows] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [grandTotal, setGrandTotal] = useState(0);
   const [cartLoaded, setCartLoaded] = useState(false);
-  
-  const showModal = searchParams.get('modal') === 'select-item';
-  const [editMode, setEditMode] = useState(false);
-  const [editOrderId, setEditOrderId] = useState(null);
   
   const [phoneNumber, setPhoneNumber] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
-
-  const openItemModal = () => setSearchParams({ modal: 'select-item' });
-  const closeItemModal = () => {
-    setSearchParams({});
-    setSearchQuery('');
-    setSelectedCategory('Rice');
-  };
 
   const fetchItems = async () => {
     try {
@@ -118,21 +103,6 @@ const BillingPage = ({ user: initialUser }) => {
   }, []);
 
   useEffect(() => {
-    if (location.state?.editOrder) {
-      const { order_id, items: orderItems } = location.state.editOrder;
-      setEditMode(true);
-      setEditOrderId(order_id);
-      const editRows = orderItems.map((item, index) => ({
-        id: Date.now() + index, item_id: item.item_id, item_name: item.item_name, rate: item.rate, quantity: item.quantity, total: item.total,
-      }));
-      setBillingRows(editRows);
-      setCartLoaded(true);
-      toast.info(`Editing order ${order_id.slice(-8)}...`);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
     if (cartLoaded && billingRows.length >= 0) {
       const timeoutId = setTimeout(() => saveCart(billingRows), 500);
       return () => clearTimeout(timeoutId);
@@ -143,13 +113,6 @@ const BillingPage = ({ user: initialUser }) => {
     const total = billingRows.reduce((sum, row) => sum + row.total, 0);
     setGrandTotal(total);
   }, [billingRows]);
-
-  const addItemToBill = (item) => {
-    const newRow = { id: Date.now(), item_id: item.item_id, item_name: item.name, rate: item.rate, quantity: 1, total: item.rate * 1 };
-    setBillingRows([...billingRows, newRow]);
-    closeItemModal();
-    toast.success(`${item.name} added to bill`);
-  };
 
   const updateQuantity = (id, value) => {
     let sanitized = value.replace(/[^0-9.]/g, '');
@@ -185,15 +148,8 @@ const BillingPage = ({ user: initialUser }) => {
         item_id: sanitizeInput(row.item_id, 50), item_name: sanitizeInput(row.item_name, 200), rate: parseFloat(row.rate) || 0, quantity: parseFloat(row.quantity) || 0, total: parseFloat((row.rate * row.quantity).toFixed(2)) || 0
       }));
       
-      if (editMode && editOrderId) {
-        await axiosInstance.put(`/orders/${editOrderId}`, { items: sanitizedItems, grand_total: parseFloat(grandTotal.toFixed(2)) });
-        toast.success('Order updated successfully!');
-        setEditMode(false);
-        setEditOrderId(null);
-      } else {
-        await axiosInstance.post('/orders', { items: sanitizedItems, grand_total: parseFloat(grandTotal.toFixed(2)) });
-        toast.success('Order placed successfully!');
-      }
+      await axiosInstance.post('/orders', { items: sanitizedItems, grand_total: parseFloat(grandTotal.toFixed(2)) });
+      toast.success('Order placed successfully!');
       
       setBillingRows([]);
       setGrandTotal(0);
@@ -201,8 +157,9 @@ const BillingPage = ({ user: initialUser }) => {
       setShowAddressModal(false);
       setPhoneNumber('');
       setHomeAddress('');
+      navigate('/orders');
     } catch (error) {
-      toast.error(error.response?.data?.detail || (editMode ? 'Failed to update order' : 'Failed to place order'));
+      toast.error('Failed to place order');
     } finally {
       setSavingProfile(false);
     }
@@ -215,59 +172,25 @@ const BillingPage = ({ user: initialUser }) => {
     if (!user.phone_number || !user.home_address) { setShowAddressModal(true); return; }
 
     try {
-      if (editMode && editOrderId) {
-        await axiosInstance.put(`/orders/${editOrderId}`, { items: billingRows, grand_total: grandTotal });
-        toast.success('Order updated successfully!');
-        setEditMode(false);
-        setEditOrderId(null);
-      } else {
-        await axiosInstance.post('/orders', { items: billingRows, grand_total: grandTotal });
-        toast.success('Order placed successfully!');
-      }
+      await axiosInstance.post('/orders', { items: billingRows, grand_total: grandTotal });
+      toast.success('Order placed successfully!');
+      
       setBillingRows([]);
       setGrandTotal(0);
       await clearCart();
+      navigate('/orders');
     } catch (error) {
-      toast.error(editMode ? 'Failed to update order' : 'Failed to place order');
+      toast.error('Failed to place order');
     }
   };
-
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   return (
     <Layout user={user} setUser={setUser}>
       <div className="flex flex-col h-full relative">
         <div className="flex-1 overflow-auto p-3 md:p-8 pb-48">
-          {editMode && (
-            <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-amber-100 rounded-full p-2">
-                  <Pencil className="h-5 w-5 text-amber-700" />
-                </div>
-                <div>
-                  <p className="font-primary font-bold text-amber-900">Editing Order</p>
-                  <p className="text-sm text-amber-700 font-secondary">Order ID: {editOrderId?.slice(-8)}</p>
-                </div>
-              </div>
-              <Button
-                data-testid="cancel-edit-btn"
-                onClick={() => {
-                  setEditMode(false); setEditOrderId(null); setBillingRows([]); setGrandTotal(0); toast.info('Edit cancelled');
-                }}
-                variant="outline"
-                className="text-amber-700 border-amber-300 hover:bg-amber-100 font-secondary"
-              >
-                <X className="mr-2 h-4 w-4" /> Cancel Edit
-              </Button>
-            </div>
-          )}
           <div className="mb-2">
-            <h2 className="text-base md:text-lg font-bold font-primary text-emerald-950 mb-1">{editMode ? 'Edit Order' : 'Ordering'}</h2>
-            <p className="text-xs md:text-sm text-zinc-500 font-secondary">{editMode ? 'Modify your existing order' : 'Create new order'}</p>
+            <h2 className="text-base md:text-lg font-bold font-primary text-emerald-950 mb-1">Your Cart</h2>
+            <p className="text-xs md:text-sm text-zinc-500 font-secondary">Review your items and place order</p>
           </div>
           <div className="w-full border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
             <table className="w-full">
@@ -287,22 +210,22 @@ const BillingPage = ({ user: initialUser }) => {
                     <td className="p-2 align-middle font-mono text-sm text-zinc-700">{index + 1}</td>
                     <td className="p-2 align-middle font-secondary text-sm text-zinc-700">{row.item_name}</td>
                     <td className="p-2 align-middle font-mono text-sm text-emerald-700">₹{row.rate.toFixed(2)}</td>
-                        <td className="p-2 align-middle">
-                          <div className="relative inline-flex items-center">
-                            <Input
-                              data-testid={`qty-input-${index}`}
-                              type="text"
-                              inputMode="decimal"
-                              value={row.quantity}
-                              onChange={(e) => updateQuantity(row.id, e.target.value)}
-                              onFocus={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
-                              onClick={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
-                              onKeyUp={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
-                              placeholder="1"
-                              className="h-8 w-16 bg-transparent border border-zinc-200 rounded-md px-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
-                            />
-                          </div>
-                        </td>
+                    <td className="p-2 align-middle">
+                      <div className="relative inline-flex items-center">
+                        <Input
+                          data-testid={`qty-input-${index}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={row.quantity}
+                          onChange={(e) => updateQuantity(row.id, e.target.value)}
+                          onFocus={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
+                          onClick={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
+                          onKeyUp={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
+                          placeholder="1"
+                          className="h-8 w-16 bg-transparent border border-zinc-200 rounded-md px-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
+                        />
+                      </div>
+                    </td>
                     <td className="p-2 align-middle font-mono text-sm font-medium text-emerald-900">₹{row.total.toFixed(2)}</td>
                     <td className="p-2 align-middle">
                       <button data-testid={`delete-row-btn-${index}`} onClick={() => deleteRow(row.id)} className="text-zinc-400 hover:text-rose-500 p-1 transition-colors">
@@ -330,8 +253,8 @@ const BillingPage = ({ user: initialUser }) => {
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
                 <p className="text-2xl md:text-4xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
               </div>
-              <Button data-testid="place-order-btn" onClick={placeOrder} className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}>
-                {editMode ? 'Update Order' : 'Place Order'}
+              <Button data-testid="place-order-btn" onClick={placeOrder} className="bg-lime-400 hover:bg-lime-500 text-lime-950 h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0">
+                Place Order
               </Button>
             </div>
           </div>
@@ -357,7 +280,7 @@ const BillingPage = ({ user: initialUser }) => {
           <DialogFooter className="p-6 pt-0 flex gap-3">
             <Button data-testid="modal-cancel-btn" onClick={() => setShowAddressModal(false)} variant="outline" className="flex-1 h-12 font-secondary">Cancel</Button>
             <Button data-testid="modal-save-order-btn" onClick={handleSaveProfileAndOrder} disabled={savingProfile} className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white h-12 font-primary font-medium">
-              {savingProfile ? 'Processing...' : (editMode ? 'Save & Update Order' : 'Save & Place Order')}
+              {savingProfile ? 'Processing...' : 'Save & Place Order'}
             </Button>
           </DialogFooter>
         </DialogContent>
