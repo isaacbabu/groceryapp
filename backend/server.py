@@ -133,12 +133,14 @@ class User(BaseModel):
     picture: Optional[str] = None
     phone_number: Optional[str] = None
     home_address: Optional[str] = None
+    geolocation: Optional[str] = None
     is_admin: bool = False
     created_at: datetime
 
 class UserProfileUpdate(BaseModel):
     phone_number: str = Field(..., min_length=7, max_length=20)
     home_address: str = Field(..., min_length=5, max_length=MAX_ADDRESS_LENGTH)
+    geolocation: Optional[str] = None
     
     @field_validator('phone_number')
     @classmethod
@@ -318,7 +320,6 @@ async def create_session(request: Request, response: Response):
         existing_user = await db.users.find_one({"email": user_email}, {"_id": 0})
         if existing_user:
             user_id = existing_user["user_id"]
-            # Preserve existing admin status, or override if they are a super admin
             is_admin = existing_user.get("is_admin", False) or (user_email in SUPER_ADMIN_EMAILS)
             await db.users.update_one(
                 {"user_id": user_id},
@@ -334,6 +335,7 @@ async def create_session(request: Request, response: Response):
                 "picture": user_picture,
                 "phone_number": None,
                 "home_address": None,
+                "geolocation": None,
                 "is_admin": is_admin,
                 "created_at": datetime.now(timezone.utc)
             })
@@ -393,7 +395,8 @@ async def update_profile(profile: UserProfileUpdate, request: Request, session_t
         {"user_id": user.user_id},
         {"$set": {
             "phone_number": profile.phone_number,
-            "home_address": profile.home_address
+            "home_address": profile.home_address,
+            "geolocation": profile.geolocation
         }}
     )
     
@@ -676,7 +679,6 @@ async def add_admin(role_data: AdminRoleCreate, request: Request, session_token:
     
     target_user = await db.users.find_one({"email": role_data.email})
     if not target_user:
-        # The user hasn't logged in with Google yet.
         raise HTTPException(status_code=404, detail="User not found. They must log in to the app at least once before they can be made an admin.")
     
     if target_user.get("is_admin"):
