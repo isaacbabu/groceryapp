@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { axiosInstance } from '@/App';
 import { LogOut, LayoutDashboard, LogIn, ShoppingCart, Home, ClipboardList, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 const Layout = ({ children, user, setUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleLogin = () => {
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -71,7 +79,7 @@ const Layout = ({ children, user, setUser }) => {
                   </button>
                 </>
               ) : (
-                <Button onClick={handleLogin} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary">
+                <Button onClick={() => setShowLoginModal(true)} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary">
                   <LogIn className="mr-2 h-4 w-4" /> Sign In
                 </Button>
               )}
@@ -80,16 +88,6 @@ const Layout = ({ children, user, setUser }) => {
         </div>
       </div>
 
-      {/* Moving Ribbon / Marquee 
-      <div className="bg-lime-400 text-lime-950 py-1.5 overflow-hidden flex whitespace-nowrap border-b border-lime-500 shadow-sm z-30 relative">
-        <div className="animate-marquee inline-block font-secondary text-xs md:text-sm font-bold tracking-wide">
-          <span className="mx-8">✨ Welcome to Emmanuel Online Supermarket!</span>
-          <span className="mx-8">🚚 Free home delivery on all orders.</span>
-          <span className="mx-8">Save 15% Off on all Pulses.</span>
-          <span className="mx-8">⭐ Best prices guaranteed!</span>
-        </div>
-      </div>
-      */}
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">
         {children}
@@ -108,7 +106,7 @@ const Layout = ({ children, user, setUser }) => {
           </button>
           
           <button 
-            onClick={() => user ? navigate('/your-order') : handleLogin()} 
+            onClick={() => user ? navigate('/your-order') : setShowLoginModal(true)} 
             className={`flex flex-col items-center justify-center w-full h-[calc(100%-12px)] my-[6px] mx-1 rounded-lg transition-colors ${isActive('/your-order') ? 'bg-lime-400 text-lime-950 shadow-sm' : 'text-zinc-500 hover:text-lime-700 hover:bg-lime-50'}`}
           >
             <ShoppingCart className="h-5 w-5 md:h-6 md:w-6 mb-1" />
@@ -116,7 +114,7 @@ const Layout = ({ children, user, setUser }) => {
           </button>
           
           <button 
-            onClick={() => user ? navigate('/orders') : handleLogin()} 
+            onClick={() => user ? navigate('/orders') : setShowLoginModal(true)} 
             className={`flex flex-col items-center justify-center w-full h-[calc(100%-12px)] my-[6px] mx-1 rounded-lg transition-colors ${isActive('/orders') ? 'bg-lime-400 text-lime-950 shadow-sm' : 'text-zinc-500 hover:text-lime-700 hover:bg-lime-50'}`}
           >
             <ClipboardList className="h-5 w-5 md:h-6 md:w-6 mb-1" />
@@ -124,7 +122,7 @@ const Layout = ({ children, user, setUser }) => {
           </button>
           
           <button 
-            onClick={() => user ? navigate('/profile') : handleLogin()} 
+            onClick={() => user ? navigate('/profile') : setShowLoginModal(true)} 
             className={`flex flex-col items-center justify-center w-full h-[calc(100%-12px)] my-[6px] mx-1 rounded-lg transition-colors ${isActive('/profile') ? 'bg-lime-400 text-lime-950 shadow-sm' : 'text-zinc-500 hover:text-lime-700 hover:bg-lime-50'}`}
           >
             <User className="h-5 w-5 md:h-6 md:w-6 mb-1" />
@@ -133,6 +131,30 @@ const Layout = ({ children, user, setUser }) => {
           
         </div>
       </div>
+
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold font-primary text-emerald-950">
+              Sign in to continue
+            </DialogTitle>
+            <DialogDescription className="text-center text-zinc-500 font-secondary">
+              Please sign in to access your account and complete your purchases.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+              <LogIn className="w-8 h-8 text-emerald-900" />
+            </div>
+            <Button
+              onClick={handleLogin}
+              className="w-full bg-emerald-900 hover:bg-emerald-950 text-white h-12 text-base font-primary font-medium"
+            >
+              Sign in with Google
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

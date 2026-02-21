@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { axiosInstance } from '@/App';
-import { Search, ChevronUp, ChevronDown, Trash2, ShoppingCart } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, Trash2, ShoppingCart, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import Layout from '@/components/Layout';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -16,6 +23,7 @@ const HomePage = () => {
   const [addedItems, setAddedItems] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [itemQuantities, setItemQuantities] = useState({});
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const fetchItems = async () => {
     try {
@@ -124,8 +132,7 @@ const HomePage = () => {
 
   const addToCart = async (item) => {
     if (!user) {
-      toast.info("Please sign in to add items to cart");
-      handleLoginPrompt();
+      setShowLoginModal(true);
       return;
     }
     setAddingItems(prev => new Set([...prev, item.item_id]));
@@ -283,6 +290,30 @@ const HomePage = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold font-primary text-emerald-950">
+              Sign in to continue
+            </DialogTitle>
+            <DialogDescription className="text-center text-zinc-500 font-secondary">
+              You need to be signed in to add items to your cart and complete your order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+              <LogIn className="w-8 h-8 text-emerald-900" />
+            </div>
+            <Button
+              onClick={handleLoginPrompt}
+              className="w-full bg-emerald-900 hover:bg-emerald-950 text-white h-12 text-base font-primary font-medium"
+            >
+              Sign in with Google
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
