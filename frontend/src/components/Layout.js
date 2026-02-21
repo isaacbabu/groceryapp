@@ -80,7 +80,7 @@ const Layout = ({ children, user, setUser }) => {
         </div>
       </div>
 
-      {/* Moving Ribbon / Marquee */}
+      {/* Moving Ribbon / Marquee 
       <div className="bg-lime-400 text-lime-950 py-1.5 overflow-hidden flex whitespace-nowrap border-b border-lime-500 shadow-sm z-30 relative">
         <div className="animate-marquee inline-block font-secondary text-xs md:text-sm font-bold tracking-wide">
           <span className="mx-8">✨ Welcome to Emmanuel Online Supermarket!</span>
@@ -89,7 +89,7 @@ const Layout = ({ children, user, setUser }) => {
           <span className="mx-8">⭐ Best prices guaranteed!</span>
         </div>
       </div>
-
+      */}
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">
         {children}
