@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { ArrowLeft, Package, User, MapPin, Phone, Mail, Trash2, ShieldCheck, X } from 'lucide-react';
+import { Package, User, MapPin, Phone, Mail, Trash2, ShieldCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -73,7 +73,6 @@ const AdminDashboard = ({ user }) => {
     }
   };
 
-  // Admin Role Management Functions
   const fetchAdmins = async () => {
     setAdminsLoading(true);
     try {
@@ -100,7 +99,7 @@ const AdminDashboard = ({ user }) => {
       await axiosInstance.post('/admin/roles', { email: newAdminEmail.trim() });
       toast.success('Admin added successfully!');
       setNewAdminEmail('');
-      fetchAdmins(); // Refresh list
+      fetchAdmins();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to add admin');
     }
@@ -110,7 +109,7 @@ const AdminDashboard = ({ user }) => {
     try {
       await axiosInstance.delete(`/admin/roles/${userId}`);
       toast.success('Admin revoked successfully');
-      fetchAdmins(); // Refresh list
+      fetchAdmins();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to revoke admin');
     }
@@ -129,7 +128,6 @@ const AdminDashboard = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      {/* Header */}
       <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="cursor-pointer inline-block" onClick={() => navigate('/')}>
@@ -142,15 +140,7 @@ const AdminDashboard = ({ user }) => {
       <div className="py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-          <Button
-            data-testid="back-btn"
-            onClick={() => navigate('/')}
-            variant="ghost"
-            className="font-secondary"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Billing
-          </Button>
-          <div className="text-center">
+          <div>
             <h1 className="text-3xl font-bold font-primary text-emerald-950 tracking-tight">Admin Dashboard</h1>
             <p className="text-sm text-zinc-500 font-secondary mt-1">All orders from all users</p>
           </div>
@@ -321,7 +311,6 @@ const AdminDashboard = ({ user }) => {
         </div>
       </div>
 
-      {/* MANAGE ADMINS MODAL */}
       <Dialog open={showAdminsModal} onOpenChange={setShowAdminsModal}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -331,7 +320,6 @@ const AdminDashboard = ({ user }) => {
           </DialogHeader>
           
           <div className="space-y-6 py-2">
-            {/* Add New Admin Section */}
             <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
               <Label htmlFor="adminEmail" className="text-sm font-primary font-bold text-zinc-700 block mb-2">
                 Promote User to Admin
@@ -355,7 +343,6 @@ const AdminDashboard = ({ user }) => {
               </p>
             </div>
 
-            {/* List Admins Section */}
             <div>
               <Label className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-3 block">
                 Current Admins
@@ -376,7 +363,6 @@ const AdminDashboard = ({ user }) => {
                         <p className="text-xs text-zinc-500 font-secondary truncate">{admin.email}</p>
                       </div>
                       
-                      {/* Cannot delete the super admin or yourself */}
                       {admin.email !== "isaac.babu.personal@gmail.com" && admin.user_id !== user?.user_id && (
                         <button 
                           onClick={() => handleRevokeAdmin(admin.user_id)}

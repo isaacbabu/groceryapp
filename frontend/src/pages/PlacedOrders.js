@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { ArrowLeft, Package, Pencil } from 'lucide-react';
+import { Package, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -28,18 +28,10 @@ const PlacedOrders = ({ user }) => {
 
   const handleEditOrder = async (order) => {
     try {
-      // 1. Delete the existing order
       await axiosInstance.delete(`/orders/${order.order_id}`);
-      
-      // 2. Put the order items into the cart
       await axiosInstance.put('/cart', { items: order.items });
-
-      // 3. Remove from local state
       setOrders(orders.filter(o => o.order_id !== order.order_id));
-      
       toast.success('Order moved to cart for editing');
-      
-      // 4. Navigate to cart
       navigate('/your-order');
     } catch (error) {
       toast.error('Failed to edit order');
@@ -61,14 +53,8 @@ const PlacedOrders = ({ user }) => {
     <Layout user={user}>
       <div className="py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-6 flex items-center justify-between">
-            <Button data-testid="back-btn" onClick={() => navigate('/')} variant="ghost" className="font-secondary">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Billing
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold font-primary text-emerald-950 tracking-tight">Placed Orders</h1>
-            </div>
-            <div className="w-24"></div>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold font-primary text-emerald-950 tracking-tight">Placed Orders</h1>
           </div>
 
           {orders.length === 0 ? (
@@ -83,10 +69,6 @@ const PlacedOrders = ({ user }) => {
                 <div key={order.order_id} data-testid={`order-${order.order_id}`} className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Order ID</p>
-                      <p className="font-mono text-sm text-emerald-900 font-medium">{order.order_id}</p>
-                    </div>
-                    <div className="text-center">
                       <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Status</p>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 font-secondary">
                         {order.status}

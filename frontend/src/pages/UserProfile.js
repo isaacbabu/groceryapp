@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { ArrowLeft, User, Phone, MapPin } from 'lucide-react';
+import { User, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +8,6 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 
 const UserProfile = ({ user: initialUser }) => {
-  const navigate = useNavigate();
   const [user, setUser] = useState(initialUser);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
@@ -46,12 +44,6 @@ const UserProfile = ({ user: initialUser }) => {
   return (
     <Layout user={user} setUser={setUser}>
       <div className="py-8 px-4 max-w-2xl mx-auto">
-        <div className="mb-6">
-          <Button data-testid="back-btn" onClick={() => navigate('/')} variant="ghost" className="font-secondary">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Billing
-          </Button>
-        </div>
-
         <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="bg-emerald-900 p-8 text-center">
             {user?.picture ? (
