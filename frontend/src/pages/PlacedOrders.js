@@ -84,16 +84,19 @@ const PlacedOrders = ({ user }) => {
                         </span>
                       </div>
 
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Payment</p>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium font-secondary ${
-                          paymentStatus === 'Paid' ? 'bg-blue-100 text-blue-900' :
-                          paymentStatus === 'Failed' ? 'bg-rose-100 text-rose-900' :
-                          'bg-amber-100 text-amber-900'
-                        }`}>
-                          {paymentStatus}
-                        </span>
-                      </div>
+                      {/* Payment badge will only show if the order is confirmed */}
+                      {order.status === 'Order Confirmed' && (
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Payment</p>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium font-secondary ${
+                            paymentStatus === 'Paid' ? 'bg-blue-100 text-blue-900' :
+                            paymentStatus === 'Failed' ? 'bg-rose-100 text-rose-900' :
+                            'bg-amber-100 text-amber-900'
+                          }`}>
+                            {paymentStatus}
+                          </span>
+                        </div>
+                      )}
 
                       <div className="text-right flex-grow sm:flex-grow-0">
                         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Date</p>
@@ -125,14 +128,13 @@ const PlacedOrders = ({ user }) => {
                         </tbody>
                       </table>
 
-                      {/* Buttons on the left, Grand Total on the right */}
                       <div className="mt-4 pt-4 border-t border-zinc-200 flex flex-col-reverse sm:flex-row sm:items-end justify-between gap-4">
                         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                          {paymentStatus !== 'Paid' && (
+                          {paymentStatus !== 'Paid' && order.status === 'Order Confirmed' && (
                             <Button 
                               data-testid={`pay-now-btn-${order.order_id}`} 
                               onClick={() => handlePayNow(order)} 
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary flex-1 sm:flex-none"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary flex-1 sm:flex-none shadow-md animate-in fade-in zoom-in duration-300"
                             >
                               <CreditCard className="mr-2 h-4 w-4" /> Pay Now
                             </Button>

@@ -34,7 +34,7 @@ if not mongo_url:
 client = AsyncIOMotorClient(mongo_url, maxPoolSize=50, minPoolSize=10)
 db = client[os.environ.get('DB_NAME', 'groceryapp')]
 
-# Simple in-memory cache with TTL
+# Simple in-memory cache with TTL (Left intact in case you need it for categories)
 class SimpleCache:
     def __init__(self):
         self.cache = {}
@@ -416,18 +416,12 @@ async def get_items(page: int = 1, limit: int = 100):
     if limit < 1: limit = 10
     if limit > 500: limit = 500
     
-    cache_key = f"items_page_{page}_limit_{limit}"
-    cached_items = cache.get(cache_key, ttl_seconds=300)
-    if cached_items is not None:
-        return cached_items
-    
     skip = (page - 1) * limit
     try:
         items = await db.items.find({}, {"_id": 0}).skip(skip).limit(limit).to_list(limit)
         for item in items:
             if isinstance(item['created_at'], str):
                 item['created_at'] = datetime.fromisoformat(item['created_at'])
-        cache.set(cache_key, items)
         return items
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to fetch items")
