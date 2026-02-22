@@ -220,7 +220,6 @@ const HomePage = () => {
 
               return (
                 <div key={category}>
-                  {/* REMOVED THE ITEM COUNT BADGE HERE */}
                   <div className="flex items-center gap-3 mb-6">
                     <h3 className="text-2xl font-bold font-primary text-emerald-950">{category}</h3>
                   </div>
@@ -239,9 +238,9 @@ const HomePage = () => {
                           />
                         </div>
                         <div className="p-2 md:p-4">
-                          <h4 className="font-primary font-bold text-emerald-950 text-xs md:text-sm mb-1.5 leading-tight break-words">{item.name}</h4>
+                          {/* PRODUCT NAME SIZE INCREASED TO text-sm md:text-base */}
+                          <h4 className="font-primary font-bold text-emerald-950 text-sm md:text-base mb-1.5 leading-tight break-words">{item.name}</h4>
                           
-                          {/* GREY OUTLINED BADGE BELOW PRODUCT NAME */}
                           <div className="mb-2">
                             <span className="inline-flex items-center justify-center border border-zinc-300 bg-zinc-100 text-zinc-800 text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium">
                               {item.unit || '1 kg'}
@@ -252,7 +251,6 @@ const HomePage = () => {
                             <div>
                               <div className="flex items-center gap-1">
                                 <p className="flex items-center text-sm md:text-lg font-bold text-emerald-600 font-primary">
-                                  {/* STANDARD RUPEE ICON - SLIGHTLY REDUCED SIZE */}
                                   <IndianRupee className="w-3.5 h-3.5 md:w-4 md:h-4 mr-0.5" strokeWidth={2.5} />
                                   {item.rate}
                                 </p>
