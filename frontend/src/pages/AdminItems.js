@@ -31,6 +31,7 @@ const AdminItems = ({ user }) => {
   const [formData, setFormData] = useState({
     name: '',
     rate: '',
+    unit: '1 kg',
     image_url: '',
     category: '',
   });
@@ -40,11 +41,9 @@ const AdminItems = ({ user }) => {
   const fetchCategories = useCallback(async () => {
     try {
       const response = await axiosInstance.get('/categories');
-      // Filter out "All" from categories for item creation
       const cats = response.data.filter((cat) => cat !== 'All');
       setCategories(cats);
 
-      // Set default category if not set
       setFormData((prev) => {
         if (!prev.category && cats.length > 0) {
           return { ...prev, category: cats[0] };
@@ -83,14 +82,12 @@ const AdminItems = ({ user }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB');
       e.target.value = '';
       return;
     }
 
-    // Check file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       e.target.value = '';
@@ -115,34 +112,25 @@ const AdminItems = ({ user }) => {
   };
 
   const handleSubmit = async () => {
-    // Validate all required fields
     const missingFields = [];
     if (!formData.name) missingFields.push('Item Name');
     if (!formData.rate) missingFields.push('Rate');
+    if (!formData.unit) missingFields.push('Unit');
     if (!formData.image_url) missingFields.push('Image');
     if (!formData.category) missingFields.push('Category');
 
     if (missingFields.length > 0) {
       toast.error(`Please fill in: ${missingFields.join(', ')}`);
-      console.error('Missing fields:', {
-        name: !!formData.name,
-        rate: !!formData.rate,
-        image_url: !!formData.image_url,
-        category: !!formData.category,
-        categoryValue: formData.category,
-      });
       return;
     }
 
-    // Prepare payload with proper types
     const payload = {
       name: formData.name.trim(),
       rate: parseFloat(formData.rate),
+      unit: formData.unit.trim(),
       image_url: formData.image_url,
       category: formData.category,
     };
-
-    console.log('Submitting item payload:', payload);
 
     try {
       if (editingItem) {
@@ -156,10 +144,9 @@ const AdminItems = ({ user }) => {
       setShowModal(false);
       setEditingItem(null);
       setUseCdnUrl(false);
-      setFormData({ name: '', rate: '', image_url: '', category: categories[0] || '' });
+      setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] || '' });
       fetchItems();
     } catch (error) {
-      console.error('Failed to add/update item:', error.response?.data || error.message);
       const errorDetail = error.response?.data?.detail;
       if (Array.isArray(errorDetail) && errorDetail.length > 0) {
         toast.error(`Validation error: ${errorDetail[0].msg}`);
@@ -175,6 +162,7 @@ const AdminItems = ({ user }) => {
     setFormData({
       name: item.name,
       rate: item.rate.toString(),
+      unit: item.unit || '1 kg',
       image_url: item.image_url,
       category: item.category,
     });
@@ -196,7 +184,7 @@ const AdminItems = ({ user }) => {
     setShowModal(false);
     setEditingItem(null);
     setUseCdnUrl(false);
-    setFormData({ name: '', rate: '', image_url: '', category: categories[0] || '' });
+    setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] || '' });
   };
 
   const handleOpenAddModal = () => {
@@ -206,7 +194,7 @@ const AdminItems = ({ user }) => {
     }
     setEditingItem(null);
     setUseCdnUrl(false);
-    setFormData({ name: '', rate: '', image_url: '', category: categories[0] });
+    setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] });
     setShowModal(true);
   };
 
@@ -223,7 +211,6 @@ const AdminItems = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      {/* Header */}
       <div className="bg-emerald-900 border-b border-emerald-950 px-4 md:px-8 py-4 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="cursor-pointer inline-block" onClick={() => navigate('/')}>
@@ -238,23 +225,14 @@ const AdminItems = ({ user }) => {
       <div className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-            <Button
-              data-testid="back-btn"
-              onClick={() => navigate('/admin')}
-              variant="ghost"
-              className="font-secondary"
-            >
+            <Button onClick={() => navigate('/admin')} variant="ghost" className="font-secondary">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
             </Button>
             <div className="text-center">
               <h1 className="text-3xl font-bold font-primary text-emerald-950 tracking-tight">Manage Items</h1>
               <p className="text-sm text-zinc-500 font-secondary mt-1">Add, edit, or remove grocery items</p>
             </div>
-            <Button
-              data-testid="add-item-btn"
-              onClick={handleOpenAddModal}
-              className="bg-lime-400 hover:bg-lime-500 text-lime-950 font-secondary font-bold"
-            >
+            <Button onClick={handleOpenAddModal} className="bg-lime-400 hover:bg-lime-500 text-lime-950 font-secondary font-bold">
               <Plus className="mr-2 h-4 w-4" /> Add Item
             </Button>
           </div>
@@ -271,18 +249,21 @@ const AdminItems = ({ user }) => {
           ) : (
             <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
               <div className="divide-y divide-zinc-100">
-                {items.map((item) => (
-                  <div
-                    key={item.item_id}
-                    data-testid={`item-card-${item.item_id}`}
-                    className="flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors"
-                  >
-                    {/* Item Image */}
+                {/* ADDED INDEX (index) to map function */}
+                {items.map((item, index) => (
+                  <div key={item.item_id} className="flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors">
+                    
+                    {/* ADDED SL NUMBER */}
+                    <div className="w-8 flex-shrink-0 text-center">
+                      <span className="text-sm font-mono font-bold text-zinc-400">
+                        {index + 1}.
+                      </span>
+                    </div>
+
                     <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-100">
                       <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
                     </div>
-
-                    {/* Item Details */}
+                    
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-primary font-bold text-zinc-900 truncate">{item.name}</h3>
@@ -290,27 +271,14 @@ const AdminItems = ({ user }) => {
                           {item.category}
                         </span>
                       </div>
-                      <p className="font-mono text-emerald-700 font-medium">₹{item.rate.toFixed(2)}</p>
+                      <p className="font-mono text-emerald-700 font-medium">₹{item.rate.toFixed(2)} / {item.unit || '1 kg'}</p>
                     </div>
-
-                    {/* Action Buttons */}
+                    
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        data-testid={`edit-item-btn-${item.item_id}`}
-                        onClick={() => handleEdit(item)}
-                        variant="outline"
-                        size="sm"
-                        className="font-secondary"
-                      >
+                      <Button onClick={() => handleEdit(item)} variant="outline" size="sm" className="font-secondary">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        data-testid={`delete-item-btn-${item.item_id}`}
-                        onClick={() => setDeleteItemId(item.item_id)}
-                        variant="outline"
-                        size="sm"
-                        className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary"
-                      >
+                      <Button onClick={() => setDeleteItemId(item.item_id)} variant="outline" size="sm" className="text-rose-600 border-rose-300 hover:bg-rose-50 font-secondary">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -322,7 +290,6 @@ const AdminItems = ({ user }) => {
         </div>
       </div>
 
-      {/* Add/Edit Item Modal */}
       <Dialog open={showModal} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -333,15 +300,11 @@ const AdminItems = ({ user }) => {
 
           <div className="space-y-4 py-4">
             <div>
-              <Label
-                htmlFor="name"
-                className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block"
-              >
+              <Label htmlFor="name" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">
                 Item Name *
               </Label>
               <Input
                 id="name"
-                data-testid="item-name-input"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Tomato"
@@ -349,37 +312,42 @@ const AdminItems = ({ user }) => {
               />
             </div>
 
-            <div>
-              <Label
-                htmlFor="rate"
-                className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block"
-              >
-                Rate (₹) *
-              </Label>
-              <Input
-                id="rate"
-                data-testid="item-rate-input"
-                type="number"
-                step="0.01"
-                value={formData.rate}
-                onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
-                placeholder="e.g., 50.00"
-                className="font-mono"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="rate" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">
+                  Rate (₹) *
+                </Label>
+                <Input
+                  id="rate"
+                  type="number"
+                  step="0.01"
+                  value={formData.rate}
+                  onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
+                  placeholder="e.g., 50.00"
+                  className="font-mono"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="unit" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">
+                  Base Unit *
+                </Label>
+                <Input
+                  id="unit"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  placeholder="e.g., 1 kg, 500g, 1 piece"
+                  className="font-secondary"
+                />
+              </div>
             </div>
 
             <div>
-              <Label
-                htmlFor="category"
-                className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block"
-              >
+              <Label htmlFor="category" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">
                 Category *
               </Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-              >
-                <SelectTrigger data-testid="item-category-select">
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -394,99 +362,40 @@ const AdminItems = ({ user }) => {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label
-                  htmlFor="image"
-                  className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider"
-                >
+                <Label htmlFor="image" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider">
                   <Upload className="h-4 w-4 inline mr-1" /> Image *
                 </Label>
                 <div className="flex items-center gap-1 text-xs font-secondary bg-zinc-100 rounded-full p-1">
-                  <button
-                    type="button"
-                    className={`px-2 py-0.5 rounded-full ${
-                      !useCdnUrl ? 'bg-white shadow-sm text-emerald-900 font-semibold' : 'text-zinc-600'
-                    }`}
-                    onClick={() => setUseCdnUrl(false)}
-                  >
-                    Upload
-                  </button>
-                  <button
-                    type="button"
-                    className={`px-2 py-0.5 rounded-full ${
-                      useCdnUrl ? 'bg-white shadow-sm text-emerald-900 font-semibold' : 'text-zinc-600'
-                    }`}
-                    onClick={() => setUseCdnUrl(true)}
-                  >
-                    CDN URL
-                  </button>
+                  <button type="button" className={`px-2 py-0.5 rounded-full ${!useCdnUrl ? 'bg-white shadow-sm text-emerald-900 font-semibold' : 'text-zinc-600'}`} onClick={() => setUseCdnUrl(false)}>Upload</button>
+                  <button type="button" className={`px-2 py-0.5 rounded-full ${useCdnUrl ? 'bg-white shadow-sm text-emerald-900 font-semibold' : 'text-zinc-600'}`} onClick={() => setUseCdnUrl(true)}>CDN URL</button>
                 </div>
               </div>
-
               {!useCdnUrl ? (
                 <>
-                  <Input
-                    id="image"
-                    data-testid="item-image-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploadingImage}
-                    className="font-secondary"
-                  />
+                  <Input id="image" type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="font-secondary" />
                   <p className="text-[11px] text-zinc-500 mt-1">Max 5MB. Supported: images only.</p>
                 </>
               ) : (
-                <Input
-                  id="image-url"
-                  data-testid="item-image-url-input"
-                  type="text"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://cdn.example.com/path/to/image.jpg"
-                  className="font-secondary"
-                />
+                <Input id="image-url" type="text" value={formData.image_url} onChange={(e) => setFormData({ ...formData, image_url: e.target.value })} placeholder="https://cdn.example.com/path/to/image.jpg" className="font-secondary" />
               )}
-
-              {uploadingImage && !useCdnUrl && (
-                <p className="text-sm text-zinc-500 mt-2">Uploading image...</p>
-              )}
+              {uploadingImage && !useCdnUrl && <p className="text-sm text-zinc-500 mt-2">Uploading image...</p>}
               {formData.image_url && !uploadingImage && (
                 <div className="mt-2">
-                  <img
-                    src={formData.image_url}
-                    alt="Preview"
-                    className="w-32 h-32 object-cover rounded-lg border border-zinc-200"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      toast.error('Invalid image');
-                    }}
-                  />
+                  <img src={formData.image_url} alt="Preview" className="w-32 h-32 object-cover rounded-lg border border-zinc-200" onError={(e) => { e.target.style.display = 'none'; toast.error('Invalid image'); }} />
                 </div>
               )}
             </div>
           </div>
 
           <div className="flex gap-3">
-            <Button
-              data-testid="cancel-item-btn"
-              onClick={handleCloseModal}
-              variant="outline"
-              className="flex-1 font-secondary"
-            >
-              Cancel
-            </Button>
-            <Button
-              data-testid="submit-item-btn"
-              onClick={handleSubmit}
-              className="flex-1 bg-emerald-900 hover:bg-emerald-950 font-secondary"
-            >
+            <Button onClick={handleCloseModal} variant="outline" className="flex-1 font-secondary">Cancel</Button>
+            <Button onClick={handleSubmit} className="flex-1 bg-emerald-900 hover:bg-emerald-950 font-secondary">
               {editingItem ? 'Update Item' : 'Add Item'}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteItemId} onOpenChange={() => setDeleteItemId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -497,12 +406,7 @@ const AdminItems = ({ user }) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => handleDelete(deleteItemId)}
-              className="bg-rose-600 hover:bg-rose-700"
-            >
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => handleDelete(deleteItemId)} className="bg-rose-600 hover:bg-rose-700">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
