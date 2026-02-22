@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { User, Phone, MapPin, Map, Navigation } from 'lucide-react';
+import { User, Phone, MapPin, Map, Navigation, ShieldCheck, FileText, ArrowLeftRight, CreditCard, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,10 +9,11 @@ import { toast } from 'sonner';
 import Layout from '@/components/Layout';
 
 const UserProfile = ({ user: initialUser }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(initialUser);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
-  const [geolocation, setGeolocation] = useState(''); // New state for precise GPS
+  const [geolocation, setGeolocation] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
 
@@ -34,7 +36,7 @@ const UserProfile = ({ user: initialUser }) => {
       const response = await axiosInstance.put('/user/profile', {
         phone_number: phoneNumber,
         home_address: homeAddress,
-        geolocation: geolocation, // Send the GPS data to backend
+        geolocation: geolocation, 
       });
       setUser(response.data);
       toast.success('Profile updated successfully');
@@ -57,7 +59,6 @@ const UserProfile = ({ user: initialUser }) => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        // Save exact coordinates to our new field
         setGeolocation(`${latitude}, ${longitude}`);
         toast.success('GPS coordinates captured!');
         setIsLocating(false);
@@ -85,7 +86,9 @@ const UserProfile = ({ user: initialUser }) => {
 
   return (
     <Layout user={user} setUser={setUser}>
-      <div className="py-8 px-4 max-w-2xl mx-auto">
+      <div className="py-8 px-4 max-w-2xl mx-auto space-y-6">
+        
+        {/* Profile Details Card */}
         <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="bg-emerald-900 p-8 text-center">
             {user?.picture ? (
@@ -107,7 +110,6 @@ const UserProfile = ({ user: initialUser }) => {
               <Input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Enter your phone number" className="font-secondary"/>
             </div>
 
-            {/* Manual Address Input */}
             <div>
               <Label htmlFor="address" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center">
                 <MapPin className="h-4 w-4 mr-2" /> Manual Delivery Address *
@@ -121,7 +123,6 @@ const UserProfile = ({ user: initialUser }) => {
               />
             </div>
 
-            {/* Hidden/Automated Geolocation Input */}
             <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
               <div className="flex items-center justify-between mb-2">
                 <Label className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider flex items-center mb-0">
@@ -157,6 +158,52 @@ const UserProfile = ({ user: initialUser }) => {
             <Button onClick={handleUpdate} disabled={loading} className="w-full bg-emerald-900 hover:bg-emerald-950 text-white h-12 text-base font-primary font-medium mt-4">
               {loading ? 'Updating...' : 'Update Profile'}
             </Button>
+          </div>
+        </div>
+
+        {/* Legal & About Policies Section */}
+        <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden p-6 mb-20">
+          <h2 className="text-lg font-bold font-primary text-emerald-950 mb-4 pb-2 border-b border-zinc-100">About Us & Legal</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button onClick={() => navigate('/terms-and-conditions')} className="flex items-center p-3 hover:bg-zinc-50 rounded-xl transition-colors border border-transparent hover:border-zinc-200 text-left">
+              <div className="bg-emerald-100 p-2 rounded-lg mr-3"><FileText className="h-5 w-5 text-emerald-700"/></div>
+              <div>
+                <p className="font-primary font-bold text-zinc-800 text-sm">Terms & Conditions</p>
+                <p className="text-xs text-zinc-500 font-secondary">Our service rules</p>
+              </div>
+            </button>
+            
+            <button onClick={() => navigate('/privacy-policy')} className="flex items-center p-3 hover:bg-zinc-50 rounded-xl transition-colors border border-transparent hover:border-zinc-200 text-left">
+              <div className="bg-emerald-100 p-2 rounded-lg mr-3"><ShieldCheck className="h-5 w-5 text-emerald-700"/></div>
+              <div>
+                <p className="font-primary font-bold text-zinc-800 text-sm">Privacy Policy</p>
+                <p className="text-xs text-zinc-500 font-secondary">How we handle your data</p>
+              </div>
+            </button>
+
+            <button onClick={() => navigate('/return-policy')} className="flex items-center p-3 hover:bg-zinc-50 rounded-xl transition-colors border border-transparent hover:border-zinc-200 text-left">
+              <div className="bg-emerald-100 p-2 rounded-lg mr-3"><ArrowLeftRight className="h-5 w-5 text-emerald-700"/></div>
+              <div>
+                <p className="font-primary font-bold text-zinc-800 text-sm">Return Policy</p>
+                <p className="text-xs text-zinc-500 font-secondary">Eligibility & timelines</p>
+              </div>
+            </button>
+
+            <button onClick={() => navigate('/refund-policy')} className="flex items-center p-3 hover:bg-zinc-50 rounded-xl transition-colors border border-transparent hover:border-zinc-200 text-left">
+              <div className="bg-emerald-100 p-2 rounded-lg mr-3"><CreditCard className="h-5 w-5 text-emerald-700"/></div>
+              <div>
+                <p className="font-primary font-bold text-zinc-800 text-sm">Refund Policy</p>
+                <p className="text-xs text-zinc-500 font-secondary">Cancellations & refunds</p>
+              </div>
+            </button>
+
+            <button onClick={() => navigate('/shipping-policy')} className="flex items-center p-3 hover:bg-zinc-50 rounded-xl transition-colors border border-transparent hover:border-zinc-200 text-left sm:col-span-2">
+              <div className="bg-emerald-100 p-2 rounded-lg mr-3"><Truck className="h-5 w-5 text-emerald-700"/></div>
+              <div>
+                <p className="font-primary font-bold text-zinc-800 text-sm">Shipping Policy</p>
+                <p className="text-xs text-zinc-500 font-secondary">Delivery details & areas</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>

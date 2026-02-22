@@ -16,6 +16,13 @@ import AdminItems from '@/pages/AdminItems';
 import AdminCategories from '@/pages/AdminCategories';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
+// New Policy Pages
+import TermsAndConditions from '@/pages/TermsAndConditions';
+import ReturnPolicy from '@/pages/ReturnPolicy';
+import RefundPolicy from '@/pages/RefundPolicy';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import ShippingPolicy from '@/pages/ShippingPolicy';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 
@@ -30,10 +37,15 @@ function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       
-      {/* CHANGE 1: Remove ProtectedRoute from HomePage */}
+      {/* Public Routes */}
       <Route path="/" element={<HomePage />} /> 
+      <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+      <Route path="/return-policy" element={<ReturnPolicy />} />
+      <Route path="/refund-policy" element={<RefundPolicy />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/shipping-policy" element={<ShippingPolicy />} />
 
-      {/* Keep other routes protected */}
+      {/* Protected Routes */}
       <Route path="/your-order" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
       <Route path="/orders" element={<ProtectedRoute><PlacedOrders /></ProtectedRoute>} />

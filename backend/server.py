@@ -16,6 +16,9 @@ from datetime import datetime, timezone, timedelta
 import requests
 import asyncio
 import traceback
+import base64
+import hashlib
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -215,6 +218,12 @@ class Order(BaseModel):
     items: List[OrderItem]
     grand_total: float
     status: str
+    
+    # --- New Payment Fields ---
+    payment_status: str = "Pending"
+    payment_transaction_id: Optional[str] = None
+    # --------------------------
+    
     user_name: str
     user_email: str
     user_phone: Optional[str] = None
@@ -719,6 +728,8 @@ async def create_order(order: OrderCreate, request: Request, session_token: Opti
         "items": [item.model_dump() for item in order.items],
         "grand_total": order.grand_total,
         "status": "Pending",
+        "payment_status": "Pending",
+        "payment_transaction_id": None,
         "user_name": user.name,
         "user_email": user.email,
         "user_phone": user.phone_number,
@@ -811,6 +822,132 @@ async def confirm_order(order_id: str, request: Request, session_token: Optional
     if isinstance(updated_order['created_at'], str):
         updated_order['created_at'] = datetime.fromisoformat(updated_order['created_at'])
     return Order(**updated_order)
+
+# --- PHONEPE PAYMENT INTEGRATION ---
+
+PHONEPE_MERCHANT_ID = os.environ.get("PHONEPE_MERCHANT_ID", "PGTESTPAYUAT")
+PHONEPE_SALT_KEY = os.environ.get("PHONEPE_SALT_KEY", "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399")
+PHONEPE_SALT_INDEX = os.environ.get("PHONEPE_SALT_INDEX", "1")
+PHONEPE_ENV = os.environ.get("PHONEPE_ENV", "UAT")
+
+if PHONEPE_ENV == "PROD":
+    PHONEPE_HOST_URL = "https://api.phonepe.com/apis/hermes"
+else:
+    PHONEPE_HOST_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox"
+
+@api_router.post("/payment/initiate/{order_id}")
+async def initiate_payment(order_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_current_user(request, session_token)
+    
+    # 1. Fetch the order
+    order = await db.orders.find_one({"order_id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order["user_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    # 2. Construct PhonePe Payload
+    # PhonePe expects amount in paise (multiply by 100)
+    amount_in_paise = int(order["grand_total"] * 100)
+    
+    payload = {
+        "merchantId": PHONEPE_MERCHANT_ID,
+        "merchantTransactionId": order_id,
+        "merchantUserId": user.user_id,
+        "amount": amount_in_paise,
+        "redirectUrl": f"{frontend_url}/orders",
+        "redirectMode": "REDIRECT",
+        "callbackUrl": f"{custom_domain}/api/webhooks/phonepe", # PhonePe Server-to-Server callback
+        "mobileNumber": user.phone_number or "9999999999",
+        "paymentInstrument": {
+            "type": "PAY_PAGE"
+        }
+    }
+    
+    # 3. Encode Payload to Base64
+    base64_payload = base64.b64encode(json.dumps(payload).encode('utf-8')).decode('utf-8')
+    
+    # 4. Generate X-VERIFY Checksum
+    endpoint = "/pg/v1/pay"
+    string_to_hash = base64_payload + endpoint + PHONEPE_SALT_KEY
+    hashed_string = hashlib.sha256(string_to_hash.encode('utf-8')).hexdigest()
+    checksum = f"{hashed_string}###{PHONEPE_SALT_INDEX}"
+    
+    # 5. Call PhonePe API
+    headers = {
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum
+    }
+    
+    try:
+        # Using asyncio.to_thread to prevent blocking the async event loop
+        response = await asyncio.to_thread(
+            requests.post, 
+            f"{PHONEPE_HOST_URL}{endpoint}", 
+            json={"request": base64_payload}, 
+            headers=headers
+        )
+        response_data = response.json()
+        
+        if response_data.get("success"):
+            payment_url = response_data["data"]["instrumentResponse"]["redirectInfo"]["url"]
+            return {"url": payment_url}
+        else:
+            logger.error(f"PhonePe Init Error: {response_data}")
+            raise HTTPException(status_code=400, detail="Failed to initialize payment gateway")
+            
+    except Exception as e:
+        logger.error(f"Payment gateway connection error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Payment gateway connection error")
+
+@api_router.post("/webhooks/phonepe")
+async def phonepe_webhook(request: Request):
+    """
+    This endpoint is called automatically by PhonePe's servers when a payment succeeds or fails.
+    It does NOT require user authentication because it comes from PhonePe directly.
+    """
+    # 1. Verify Checksum to ensure request is actually from PhonePe
+    x_verify = request.headers.get("x-verify")
+    body = await request.json()
+    base64_response = body.get("response")
+    
+    if not base64_response or not x_verify:
+        raise HTTPException(status_code=400, detail="Invalid webhook payload")
+        
+    string_to_hash = base64_response + PHONEPE_SALT_KEY
+    expected_hash = hashlib.sha256(string_to_hash.encode('utf-8')).hexdigest()
+    expected_checksum = f"{expected_hash}###{PHONEPE_SALT_INDEX}"
+    
+    if x_verify != expected_checksum:
+        logger.error("PhonePe Webhook verification failed. Invalid Checksum.")
+        raise HTTPException(status_code=401, detail="Unauthorized webhook call")
+        
+    # 2. Decode the response
+    decoded_response = json.loads(base64.b64decode(base64_response).decode('utf-8'))
+    
+    # 3. Update the Database
+    order_id = decoded_response.get("data", {}).get("merchantTransactionId")
+    transaction_id = decoded_response.get("data", {}).get("transactionId")
+    status_code = decoded_response.get("code")
+    
+    if status_code == "PAYMENT_SUCCESS":
+        await db.orders.update_one(
+            {"order_id": order_id},
+            {"$set": {
+                "payment_status": "Paid", 
+                "payment_transaction_id": transaction_id
+            }}
+        )
+    else:
+        await db.orders.update_one(
+            {"order_id": order_id},
+            {"$set": {
+                "payment_status": "Failed"
+            }}
+        )
+        
+    return {"status": "success"}
 
 app.include_router(api_router)
 
