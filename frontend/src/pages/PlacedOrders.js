@@ -38,9 +38,24 @@ const PlacedOrders = ({ user }) => {
     }
   };
 
-  const handlePayNow = (order) => {
-    // Placeholder for your upcoming payment gateway integration
-    toast.info('Payment gateway integration is in progress...');
+  // --- NEW: PhonePe Payment Integration ---
+  const handlePayNow = async (order) => {
+    try {
+      toast.loading('Initializing secure payment...', { id: 'payment-toast' });
+      
+      const response = await axiosInstance.post(`/payment/initiate/${order.order_id}`);
+      
+      if (response.data && response.data.url) {
+        toast.success('Redirecting to PhonePe...', { id: 'payment-toast' });
+        // Redirect the user to the PhonePe checkout page
+        window.location.href = response.data.url;
+      } else {
+        toast.error('Failed to get payment link', { id: 'payment-toast' });
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Payment initialization failed. Please try again.', { id: 'payment-toast' });
+    }
   };
 
   if (loading) {
@@ -72,7 +87,7 @@ const PlacedOrders = ({ user }) => {
             <div className="space-y-4">
               {orders.map((order) => {
                 // Default to Cash on Delivery if the backend doesn't send a payment status yet
-                const paymentStatus = order.payment_status || 'Cash on Delivery';
+                const paymentStatus = order.payment_status || 'Pending';
                 
                 return (
                   <div key={order.order_id} data-testid={`order-${order.order_id}`} className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
@@ -130,6 +145,7 @@ const PlacedOrders = ({ user }) => {
 
                       <div className="mt-4 pt-4 border-t border-zinc-200 flex flex-col-reverse sm:flex-row sm:items-end justify-between gap-4">
                         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                          {/* Pay Now Button (Only shows if confirmed and NOT paid) */}
                           {paymentStatus !== 'Paid' && order.status === 'Order Confirmed' && (
                             <Button 
                               data-testid={`pay-now-btn-${order.order_id}`} 
@@ -140,9 +156,12 @@ const PlacedOrders = ({ user }) => {
                             </Button>
                           )}
 
-                          <Button data-testid={`edit-order-btn-${order.order_id}`} onClick={() => handleEditOrder(order)} variant="outline" className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary flex-1 sm:flex-none">
-                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                          </Button>
+                          {/* Hide Edit Order button if the order is confirmed/paid */}
+                          {order.status !== 'Order Confirmed' && (
+                            <Button data-testid={`edit-order-btn-${order.order_id}`} onClick={() => handleEditOrder(order)} variant="outline" className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary flex-1 sm:flex-none">
+                              <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                            </Button>
+                          )}
                         </div>
 
                         <div className="text-right w-full sm:w-auto">
