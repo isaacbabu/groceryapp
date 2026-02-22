@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { axiosInstance } from '@/App';
-import { Search, ChevronUp, ChevronDown, Trash2, ShoppingCart, LogIn } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, Trash2, ShoppingCart, LogIn, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -109,7 +109,7 @@ const HomePage = () => {
         };
       } else {
         updatedCart = [...currentCart, {
-            item_id: item.item_id, item_name: item.name, rate: item.rate, quantity: nextQuantity, total: item.rate * nextQuantity,
+            item_id: item.item_id, item_name: item.name, rate: item.rate, unit: item.unit || '1 kg', quantity: nextQuantity, total: item.rate * nextQuantity,
         }];
         setAddedItems(prev => new Set([...prev, item.item_id]));
       }
@@ -125,9 +125,14 @@ const HomePage = () => {
   };
 
   const increaseQuantity = (item) => setQuantity(item, getItemQuantity(item.item_id) + 1);
+  
   const decreaseQuantity = (item) => {
     const currentQty = getItemQuantity(item.item_id);
-    if (currentQty > 1) setQuantity(item, currentQty - 1);
+    if (currentQty > 1) {
+      setQuantity(item, currentQty - 1);
+    } else {
+      removeFromCart(item);
+    }
   };
 
   const addToCart = async (item) => {
@@ -143,7 +148,7 @@ const HomePage = () => {
         .filter(i => addedItems.has(i.item_id) || i.item_id === item.item_id)
         .map(i => {
           const quantity = i.item_id === item.item_id ? 1 : getItemQuantity(i.item_id);
-          return { item_id: i.item_id, item_name: i.name, rate: i.rate, quantity, total: i.rate * quantity };
+          return { item_id: i.item_id, item_name: i.name, rate: i.rate, unit: i.unit || '1 kg', quantity, total: i.rate * quantity };
         });
 
       await axiosInstance.put('/cart', { items: updatedCart });
@@ -215,14 +220,15 @@ const HomePage = () => {
 
               return (
                 <div key={category}>
+                  {/* REMOVED THE ITEM COUNT BADGE HERE */}
                   <div className="flex items-center gap-3 mb-6">
                     <h3 className="text-2xl font-bold font-primary text-emerald-950">{category}</h3>
-                    <Badge variant="secondary" className="font-secondary">{categoryItems.length} items</Badge>
                   </div>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                     {categoryItems.map(item => (
-                      <div key={item.item_id} className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+                      <div key={item.item_id} className="relative bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+                        
                         <div className="h-32 md:h-48 bg-zinc-100 overflow-hidden">
                           <img 
                             src={item.image_url} 
@@ -233,18 +239,30 @@ const HomePage = () => {
                           />
                         </div>
                         <div className="p-2 md:p-4">
-                          <h4 className="font-primary font-bold text-emerald-950 text-sm md:text-lg mb-0.5 md:mb-1 truncate">{item.name}</h4>
-                          <p className="text-xs text-zinc-500 font-secondary mb-2 md:mb-3 hidden sm:block">{item.category}</p>
+                          <h4 className="font-primary font-bold text-emerald-950 text-xs md:text-sm mb-1.5 leading-tight break-words">{item.name}</h4>
+                          
+                          {/* GREY OUTLINED BADGE BELOW PRODUCT NAME */}
+                          <div className="mb-2">
+                            <span className="inline-flex items-center justify-center border border-zinc-300 bg-zinc-100 text-zinc-800 text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium">
+                              {item.unit || '1 kg'}
+                            </span>
+                          </div>
+
                           <div className="flex flex-col gap-2">
                             <div>
-                              <p className="text-xs text-zinc-500 font-secondary hidden sm:block">Price</p>
-                              <p className="text-base md:text-xl font-bold text-emerald-600 font-primary">₹{item.rate}</p>
+                              <div className="flex items-center gap-1">
+                                <p className="flex items-center text-sm md:text-lg font-bold text-emerald-600 font-primary">
+                                  {/* STANDARD RUPEE ICON - SLIGHTLY REDUCED SIZE */}
+                                  <IndianRupee className="w-3.5 h-3.5 md:w-4 md:h-4 mr-0.5" strokeWidth={2.5} />
+                                  {item.rate}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 mt-1">
                               {addedItems.has(item.item_id) ? (
                                 <>
                                   <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
-                                    <button onClick={() => decreaseQuantity(item)} className="p-1 hover:bg-zinc-200 rounded" disabled={getItemQuantity(item.item_id) <= 1}>
+                                    <button onClick={() => decreaseQuantity(item)} className="p-1 hover:bg-zinc-200 rounded">
                                       <ChevronDown className="h-4 w-4 text-zinc-600" />
                                     </button>
                                     <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">{getItemQuantity(item.item_id)}</span>

@@ -163,6 +163,7 @@ class Item(BaseModel):
     item_id: str
     name: str
     rate: float
+    unit: str = "1 kg"
     image_url: str
     category: str
     created_at: datetime
@@ -170,6 +171,7 @@ class Item(BaseModel):
 class ItemCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     rate: float = Field(..., gt=0, le=MAX_RATE)
+    unit: str = Field(default="1 kg", min_length=1, max_length=50)
     image_url: str = Field(..., min_length=1, max_length=5000000)
     category: str = Field(..., min_length=1, max_length=100)
     
@@ -190,6 +192,7 @@ class OrderItem(BaseModel):
     item_id: str = Field(..., min_length=1, max_length=50)
     item_name: str = Field(..., min_length=1, max_length=200)
     rate: float = Field(..., ge=0, le=MAX_RATE)
+    unit: str = Field(default="1 kg", max_length=50)
     quantity: float = Field(..., gt=0, le=MAX_QUANTITY)
     total: float = Field(..., ge=0)
     
@@ -233,6 +236,7 @@ class CartItem(BaseModel):
     item_id: str = Field(..., min_length=1, max_length=50)
     item_name: str = Field(..., min_length=1, max_length=200)
     rate: float = Field(..., ge=0, le=MAX_RATE)
+    unit: str = Field(default="1 kg", max_length=50)
     quantity: float = Field(..., gt=0, le=MAX_QUANTITY)
     total: float = Field(..., ge=0)
     
@@ -439,6 +443,7 @@ async def create_item(item: ItemCreate, request: Request, session_token: Optiona
         "item_id": item_id,
         "name": item.name,
         "rate": item.rate,
+        "unit": item.unit,
         "image_url": item.image_url,
         "category": item.category,
         "created_at": datetime.now(timezone.utc)
@@ -459,6 +464,7 @@ async def update_item(item_id: str, item: ItemCreate, request: Request, session_
         {"$set": {
             "name": item.name,
             "rate": item.rate,
+            "unit": item.unit,
             "image_url": item.image_url,
             "category": item.category
         }}
@@ -540,9 +546,9 @@ async def seed_sample_items():
             return {"message": f"Items already exist ({existing_count} items). Skipping seed."}
         
         sample_items = [
-            {"name": "Toor Dal (1kg)", "rate": 150.00, "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1585996340258-c90e51a42c15?w=400"},
-            {"name": "Basmati Rice (5kg)", "rate": 450.00, "category": "Rice", "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"},
-            {"name": "Turmeric Powder (200g)", "rate": 80.00, "category": "Spices", "image_url": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400"},
+            {"name": "Toor Dal", "rate": 150.00, "unit": "1 kg", "category": "Pulses", "image_url": "https://images.unsplash.com/photo-1585996340258-c90e51a42c15?w=400"},
+            {"name": "Basmati Rice", "rate": 450.00, "unit": "5 kg", "category": "Rice", "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400"},
+            {"name": "Turmeric Powder", "rate": 80.00, "unit": "200 g", "category": "Spices", "image_url": "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=400"},
         ]
         
         for item in sample_items:
@@ -550,6 +556,7 @@ async def seed_sample_items():
                 "item_id": f"item_{uuid.uuid4().hex[:12]}",
                 "name": item["name"],
                 "rate": item["rate"],
+                "unit": item["unit"],
                 "image_url": item["image_url"],
                 "category": item["category"],
                 "created_at": datetime.now(timezone.utc)
