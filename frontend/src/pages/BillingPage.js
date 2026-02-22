@@ -88,6 +88,7 @@ const BillingPage = ({ user: initialUser }) => {
           id: Date.now() + index,
           item_id: item.item_id,
           item_name: item.item_name,
+          unit: item.unit || '1 kg',
           rate: item.rate,
           quantity: item.quantity,
           total: item.total,
@@ -105,7 +106,7 @@ const BillingPage = ({ user: initialUser }) => {
     if (!cartLoaded) return;
     try {
       const cartItems = rows.map(row => ({
-        item_id: row.item_id, item_name: row.item_name, rate: row.rate, quantity: row.quantity || 0, total: row.total || 0,
+        item_id: row.item_id, item_name: row.item_name, unit: row.unit || '1 kg', rate: row.rate, quantity: row.quantity || 0, total: row.total || 0,
       }));
       await axiosInstance.put('/cart', { items: cartItems });
     } catch (error) {
@@ -133,7 +134,7 @@ const BillingPage = ({ user: initialUser }) => {
       setEditMode(true);
       setEditOrderId(order_id);
       const editRows = orderItems.map((item, index) => ({
-        id: Date.now() + index, item_id: item.item_id, item_name: item.item_name, rate: item.rate, quantity: item.quantity, total: item.total,
+        id: Date.now() + index, item_id: item.item_id, item_name: item.item_name, unit: item.unit || '1 kg', rate: item.rate, quantity: item.quantity, total: item.total,
       }));
       setBillingRows(editRows);
       setCartLoaded(true);
@@ -155,21 +156,10 @@ const BillingPage = ({ user: initialUser }) => {
   }, [billingRows]);
 
   const addItemToBill = (item) => {
-    const newRow = { id: Date.now(), item_id: item.item_id, item_name: item.name, rate: item.rate, quantity: 1, total: item.rate * 1 };
+    const newRow = { id: Date.now(), item_id: item.item_id, item_name: item.name, unit: item.unit || '1 kg', rate: item.rate, quantity: 1, total: item.rate * 1 };
     setBillingRows([...billingRows, newRow]);
     closeItemModal();
     toast.success(`${item.name} added to bill`);
-  };
-
-  const updateQuantity = (id, value) => {
-    let sanitized = value.replace(/[^0-9.]/g, '');
-    sanitized = sanitized.replace(/^0+(?=\d)/, '');
-    const parts = sanitized.split('.');
-    if (parts.length > 2) sanitized = parts[0] + '.' + parts.slice(1).join('');
-    const qty = Math.min(parseFloat(sanitized) || 0, 10000);
-    setBillingRows(billingRows.map(row => 
-      row.id === id ? { ...row, quantity: sanitized === '' ? '' : sanitized, total: parseFloat((row.rate * qty).toFixed(2)) } : row
-    ));
   };
 
   const deleteRow = (id) => {
@@ -228,12 +218,12 @@ const BillingPage = ({ user: initialUser }) => {
       const profileResponse = await axiosInstance.put('/user/profile', { 
         phone_number: cleanPhone, 
         home_address: cleanAddress,
-        geolocation: geolocation // Will send empty string if skipped, which is fine
+        geolocation: geolocation
       });
       setUser(profileResponse.data);
       
       const sanitizedItems = billingRows.map(row => ({
-        item_id: sanitizeInput(row.item_id, 50), item_name: sanitizeInput(row.item_name, 200), rate: parseFloat(row.rate) || 0, quantity: parseFloat(row.quantity) || 0, total: parseFloat((row.rate * row.quantity).toFixed(2)) || 0
+        item_id: sanitizeInput(row.item_id, 50), item_name: sanitizeInput(row.item_name, 200), unit: sanitizeInput(row.unit, 50) || '1 kg', rate: parseFloat(row.rate) || 0, quantity: parseFloat(row.quantity) || 0, total: parseFloat((row.rate * row.quantity).toFixed(2)) || 0
       }));
       
       if (editMode && editOrderId) {
@@ -262,7 +252,6 @@ const BillingPage = ({ user: initialUser }) => {
     const hasZeroQuantity = billingRows.some(row => !row.quantity || row.quantity <= 0);
     if (hasZeroQuantity) { toast.error('Please enter quantity for all items'); return; }
     
-    // Check for phone and address only (not geolocation)
     if (!user.phone_number || !user.home_address) { 
       setShowAddressModal(true); 
       return; 
@@ -340,24 +329,18 @@ const BillingPage = ({ user: initialUser }) => {
                 {billingRows.map((row, index) => (
                   <tr key={row.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors group" data-testid={`billing-row-${index}`}>
                     <td className="p-2 align-middle font-mono text-sm text-zinc-700">{index + 1}</td>
-                    <td className="p-2 align-middle font-secondary text-sm text-zinc-700">{row.item_name}</td>
+                    
+                    <td className="p-2 align-middle font-secondary text-sm text-zinc-700">
+                      {row.item_name} <span className="text-zinc-400 text-xs ml-1">({row.unit || '1 kg'})</span>
+                    </td>
+
                     <td className="p-2 align-middle font-mono text-sm text-emerald-700">₹{row.rate.toFixed(2)}</td>
-                        <td className="p-2 align-middle">
-                          <div className="relative inline-flex items-center">
-                            <Input
-                              data-testid={`qty-input-${index}`}
-                              type="text"
-                              inputMode="decimal"
-                              value={row.quantity}
-                              onChange={(e) => updateQuantity(row.id, e.target.value)}
-                              onFocus={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
-                              onClick={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
-                              onKeyUp={(e) => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
-                              placeholder="1"
-                              className="h-8 w-16 bg-transparent border border-zinc-200 rounded-md px-2 py-1 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-right"
-                            />
-                          </div>
-                        </td>
+                    
+                    {/* Read-only quantity text display */}
+                    <td className="p-2 align-middle font-mono text-sm font-medium text-zinc-800">
+                      {row.quantity}
+                    </td>
+
                     <td className="p-2 align-middle font-mono text-sm font-medium text-emerald-900">₹{row.total.toFixed(2)}</td>
                     <td className="p-2 align-middle">
                       <button data-testid={`delete-row-btn-${index}`} onClick={() => deleteRow(row.id)} className="text-zinc-400 hover:text-rose-500 p-1 transition-colors">
@@ -377,7 +360,7 @@ const BillingPage = ({ user: initialUser }) => {
           </div>
         </div>
 
-        {/* Order Bar - Positioned above the Layout Bottom Nav */}
+        {/* Order Bar */}
         <div className="fixed bottom-16 left-0 right-0 bg-white border-t-2 border-zinc-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-40">
           <div className="max-w-7xl mx-auto px-3 md:px-8 py-3 md:py-4">
             <div className="flex items-center justify-between gap-4">
@@ -410,7 +393,6 @@ const BillingPage = ({ user: initialUser }) => {
               <Input id="modal-address" data-testid="modal-address-input" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} placeholder="Enter your delivery address" className="font-secondary h-12"/>
             </div>
 
-            {/* Hidden/Automated Geolocation Input inside the checkout modal */}
             <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
               <div className="flex items-center justify-between mb-2">
                 <Label className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider flex items-center mb-0">
