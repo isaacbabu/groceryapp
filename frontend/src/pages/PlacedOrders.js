@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { Package, Pencil } from 'lucide-react';
+import { Package, Pencil, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import Layout from '@/components/Layout';
@@ -38,6 +38,11 @@ const PlacedOrders = ({ user }) => {
     }
   };
 
+  const handlePayNow = (order) => {
+    // Placeholder for your upcoming payment gateway integration
+    toast.info('Payment gateway integration is in progress...');
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-zinc-50">
@@ -65,60 +70,91 @@ const PlacedOrders = ({ user }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {orders.map((order) => (
-                <div key={order.order_id} data-testid={`order-${order.order_id}`} className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Status</p>
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 font-secondary">
-                        {order.status}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Date</p>
-                      <p className="font-secondary text-sm text-zinc-700">
-                        {new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
+              {orders.map((order) => {
+                // Default to Cash on Delivery if the backend doesn't send a payment status yet
+                const paymentStatus = order.payment_status || 'Cash on Delivery';
+                
+                return (
+                  <div key={order.order_id} data-testid={`order-${order.order_id}`} className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4 sm:p-6 border-b border-zinc-100 bg-zinc-50/50 flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Status</p>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 font-secondary">
+                          {order.status || 'Pending'}
+                        </span>
+                      </div>
 
-                  <div className="p-6">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-zinc-100">
-                          <th className="pb-2 text-left text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Item</th>
-                          <th className="pb-2 text-right text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Rate</th>
-                          <th className="pb-2 text-right text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Qty</th>
-                          <th className="pb-2 text-right text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {order.items.map((item, idx) => (
-                          <tr key={idx} className="border-b border-zinc-50">
-                            <td className="py-2 font-secondary text-sm text-zinc-700">{item.item_name}</td>
-                            <td className="py-2 text-right font-mono text-sm text-emerald-700">₹{item.rate.toFixed(2)}</td>
-                            <td className="py-2 text-right font-mono text-sm text-zinc-700">{item.quantity}</td>
-                            <td className="py-2 text-right font-mono text-sm font-medium text-emerald-900">₹{item.total.toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      {/* Payment badge will only show if the order is confirmed */}
+                      {order.status === 'Order Confirmed' && (
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Payment</p>
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium font-secondary ${
+                            paymentStatus === 'Paid' ? 'bg-blue-100 text-blue-900' :
+                            paymentStatus === 'Failed' ? 'bg-rose-100 text-rose-900' :
+                            'bg-amber-100 text-amber-900'
+                          }`}>
+                            {paymentStatus}
+                          </span>
+                        </div>
+                      )}
 
-                    <div className="mt-4 pt-4 border-t border-zinc-200 flex justify-end">
-                      <div className="text-right">
-                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1 font-primary">Grand Total</p>
-                        <p className="text-3xl font-mono font-bold text-emerald-950 tracking-tighter" data-testid={`order-total-${order.order_id}`}>₹{order.grand_total.toFixed(2)}</p>
+                      <div className="text-right flex-grow sm:flex-grow-0">
+                        <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary mb-1">Date</p>
+                        <p className="font-secondary text-sm text-zinc-700">
+                          {new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-zinc-100 flex justify-center">
-                      <Button data-testid={`edit-order-btn-${order.order_id}`} onClick={() => handleEditOrder(order)} variant="outline" className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary">
-                        <Pencil className="mr-2 h-4 w-4" /> Edit Order
-                      </Button>
+                    <div className="p-6">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-zinc-100">
+                            <th className="pb-2 text-left text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Item</th>
+                            <th className="pb-2 text-right text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Rate</th>
+                            <th className="pb-2 text-right text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Qty</th>
+                            <th className="pb-2 text-right text-xs font-bold uppercase tracking-wider text-zinc-400 font-primary">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {order.items.map((item, idx) => (
+                            <tr key={idx} className="border-b border-zinc-50">
+                              <td className="py-2 font-secondary text-sm text-zinc-700">{item.item_name}</td>
+                              <td className="py-2 text-right font-mono text-sm text-emerald-700">₹{item.rate.toFixed(2)}</td>
+                              <td className="py-2 text-right font-mono text-sm text-zinc-700">{item.quantity}</td>
+                              <td className="py-2 text-right font-mono text-sm font-medium text-emerald-900">₹{item.total.toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <div className="mt-4 pt-4 border-t border-zinc-200 flex flex-col-reverse sm:flex-row sm:items-end justify-between gap-4">
+                        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                          {paymentStatus !== 'Paid' && order.status === 'Order Confirmed' && (
+                            <Button 
+                              data-testid={`pay-now-btn-${order.order_id}`} 
+                              onClick={() => handlePayNow(order)} 
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-secondary flex-1 sm:flex-none shadow-md animate-in fade-in zoom-in duration-300"
+                            >
+                              <CreditCard className="mr-2 h-4 w-4" /> Pay Now
+                            </Button>
+                          )}
+
+                          <Button data-testid={`edit-order-btn-${order.order_id}`} onClick={() => handleEditOrder(order)} variant="outline" className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 font-secondary flex-1 sm:flex-none">
+                            <Pencil className="mr-2 h-4 w-4" /> Edit Order
+                          </Button>
+                        </div>
+
+                        <div className="text-right w-full sm:w-auto">
+                          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1 font-primary">Grand Total</p>
+                          <p className="text-3xl font-mono font-bold text-emerald-950 tracking-tighter" data-testid={`order-total-${order.order_id}`}>₹{order.grand_total.toFixed(2)}</p>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
