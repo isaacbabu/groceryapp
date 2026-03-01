@@ -10,7 +10,7 @@ const PrivacyPolicy = ({ user }) => {
         <div className="space-y-8 font-secondary text-zinc-700 leading-relaxed">
           <section>
             <h2 className="text-xl font-bold text-zinc-900 mb-3">Introduction</h2>
-            <p>This Privacy Policy describes how Emmanuel Supermarket and its affiliates (collectively "Emmanuel Supermarket, we, our, us") collect, use, share, protect or otherwise process your information/ personal data through our website https://www.emmanuelsupermarket.in (hereinafter referred to as Platform).</p>
+            <p>This Privacy Policy describes how Emmanuel Agencies and its affiliates (collectively "Emmanuel Agencies, we, our, us") collect, use, share, protect or otherwise process your information/ personal data through our website https://www.emmanuelsupermarket.in (hereinafter referred to as Platform).</p>
             <p className="mt-2">Please note that you may be able to browse certain sections of the Platform without registering with us. We do not offer any product/service under this Platform outside India and your personal data will primarily be stored and processed in India. By visiting this Platform, providing your information or availing any product/service offered on the Platform, you expressly agree to be bound by the terms and conditions of this Privacy Policy, the Terms of Use and the applicable service/product terms and conditions, and agree to be governed by the laws of India including but not limited to the laws applicable to data protection and privacy. If you do not agree please do not use or access our Platform.</p>
           </section>
 
@@ -20,7 +20,7 @@ const PrivacyPolicy = ({ user }) => {
             <p className="mt-2">Some of the sensitive personal data may be collected with your consent, such as your bank account or credit or debit card or other payment instrument information or biometric information such as your facial features or physiological information (in order to enable use of certain features when opted for, available on the Platform) etc all of the above being in accordance with applicable law(s). You always have the option to not provide information, by choosing not to use a particular service or feature on the Platform.</p>
             <p className="mt-2">We may track your behaviour, preferences, and other information that you choose to provide on our Platform. This information is compiled and analysed on an aggregated basis. We will also collect your information related to your transactions on Platform and such third-party business partner platforms.</p>
             <p className="mt-2">When such a third-party business partner collects your personal data directly from you, you will be governed by their privacy policies. We shall not be responsible for the third-party business partner’s privacy practices or the content of their privacy policies, and we request you to read their privacy policies prior to disclosing any information.</p>
-            <p className="mt-2 text-rose-600 font-medium">If you receive an email, a call from a person/association claiming to be Emmanuel Supermarket seeking any personal data like debit/credit card PIN, net-banking or mobile banking password, we request you to never provide such information. If you have already revealed such information, report it immediately to an appropriate law enforcement agency.</p>
+            <p className="mt-2 text-rose-600 font-medium">If you receive an email, a call from a person/association claiming to be Emmanuel Agencies seeking any personal data like debit/credit card PIN, net-banking or mobile banking password, we request you to never provide such information. If you have already revealed such information, report it immediately to an appropriate law enforcement agency.</p>
           </section>
 
           <section>
@@ -62,7 +62,7 @@ const PrivacyPolicy = ({ user }) => {
           <section className="bg-zinc-50 p-6 rounded-xl border border-zinc-200 mt-8">
             <h2 className="text-xl font-bold text-zinc-900 mb-4">Grievance Officer</h2>
             <div className="space-y-2">
-              <p><strong>Name of the Office:</strong> Emmanuel Supermarket</p>
+              <p><strong>Name of the Office:</strong> Emmanuel Agencies</p>
               <p><strong>Designation:</strong> Grievance Officer</p>
               <p><strong>Company Address:</strong> Plassery Bldg, Kachery Road, Kuttanellur, Thrissur 680014</p>
               <p><strong>Phone:</strong> Time: Monday - Friday (9:00 - 18:00)</p>

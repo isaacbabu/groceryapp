@@ -12,7 +12,7 @@ const TermsAndConditions = ({ user }) => {
           
           <p>This document is published in accordance with the provisions of Rule 3 (1) of the Information Technology (Intermediaries guidelines) Rules, 2011 that require publishing the rules and regulations, privacy policy and Terms of Use for access or usage of domain name https://www.emmanuelsupermarket.in ('Website'), including the related mobile site and mobile application (hereinafter referred to as 'Platform').</p>
           
-          <p>The Platform is owned by Emmanuel Supermarket, a company incorporated under the Companies Act, 1956 with its registered office at Plassery Bldg, Kachery Road, Kuttanellur, Thrissur 680014 (hereinafter referred to as ‘Platform Owner’, 'we', 'us', 'our').</p>
+          <p>The Platform is owned by Emmanuel Agencies, a company incorporated under the Companies Act, 1956 with its registered office at Plassery Bldg, Kachery Road, Kuttanellur, Thrissur 680014 (hereinafter referred to as ‘Platform Owner’, 'we', 'us', 'our').</p>
           
           <p>Your use of the Platform and services and tools are governed by the following terms and conditions (“Terms of Use”) as applicable to the Platform including the applicable policies which are incorporated herein by way of reference. If You transact on the Platform, You shall be subject to the policies that are applicable to the Platform for such transaction. By mere use of the Platform, You shall be contracting with the Platform Owner and these terms and conditions including the policies constitute Your binding obligations, with Platform Owner.</p>
           
