@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { axiosInstance } from '@/App';
 import { LogOut, LayoutDashboard, LogIn, ShoppingCart, Home, ClipboardList, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -88,9 +88,28 @@ const Layout = ({ children, user, setUser }) => {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-auto">
-        {children}
+      {/* Main Content Area & Footer */}
+      <div className="flex-1 overflow-auto flex flex-col">
+        <div className="flex-1">
+          {children}
+        </div>
+
+        {/* Global Footer */}
+        <footer className="bg-white border-t border-zinc-200 mt-12 py-8">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h3 className="font-primary font-bold text-zinc-800 text-lg mb-4">
+              Emmanuel Supermarket <span className="text-sm font-normal text-zinc-500 block sm:inline sm:ml-1">by Emmanuel Agencies.</span>
+            </h3>
+            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 text-sm font-secondary text-zinc-500">
+              <Link to="/about" className="hover:text-emerald-700 hover:underline transition-colors">About Us</Link>
+              <Link to="/privacy-policy" className="hover:text-emerald-700 hover:underline transition-colors">Privacy Policy</Link>
+              <Link to="/return-policy" className="hover:text-emerald-700 hover:underline transition-colors">Return Policy</Link>
+              <Link to="/refund-policy" className="hover:text-emerald-700 hover:underline transition-colors">Refund Policy</Link>
+              <Link to="/shipping-policy" className="hover:text-emerald-700 hover:underline transition-colors">Shipping Policy</Link>
+              <Link to="/terms-and-conditions" className="hover:text-emerald-700 hover:underline transition-colors">Terms & Conditions</Link>
+            </div>
+          </div>
+        </footer>
       </div>
 
       {/* Bottom Navigation Strip */}
