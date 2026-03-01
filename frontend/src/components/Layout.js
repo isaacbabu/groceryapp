@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { axiosInstance } from '@/App';
-import { LogOut, LayoutDashboard, LogIn, ShoppingCart, Home, ClipboardList, User } from 'lucide-react';
+import { LogOut, LayoutDashboard, LogIn, ShoppingCart, Home, ClipboardList, User, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
@@ -95,12 +95,21 @@ const Layout = ({ children, user, setUser }) => {
         </div>
 
         {/* Global Footer */}
-        <footer className="bg-white border-t border-zinc-200 mt-12 py-8">
+        <footer className="bg-white border-t border-zinc-200 mt-12 py-10">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h3 className="font-primary font-bold text-zinc-800 text-lg mb-4">
-              Emmanuel Supermarket <span className="text-sm font-normal text-zinc-500 block sm:inline sm:ml-1">by Emmanuel Agencies.</span>
-            </h3>
-            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 text-sm font-secondary text-zinc-500">
+            
+            {/* Brand & Registration */}
+            <div className="mb-6">
+              <h3 className="font-primary font-bold text-zinc-800 text-lg">
+                Emmanuel Supermarket <span className="text-sm font-normal text-zinc-500 block sm:inline sm:ml-1">by Emmanuel Agencies.</span>
+              </h3>
+              <p className="text-xs font-secondary text-zinc-400 mt-1.5 uppercase tracking-wider font-semibold">
+                FSSAI Reg No: 21326198000102
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 text-sm font-secondary text-zinc-500 mb-8">
               <Link to="/about" className="hover:text-emerald-700 hover:underline transition-colors">About Us</Link>
               <Link to="/privacy-policy" className="hover:text-emerald-700 hover:underline transition-colors">Privacy Policy</Link>
               <Link to="/return-policy" className="hover:text-emerald-700 hover:underline transition-colors">Return Policy</Link>
@@ -108,6 +117,14 @@ const Layout = ({ children, user, setUser }) => {
               <Link to="/shipping-policy" className="hover:text-emerald-700 hover:underline transition-colors">Shipping Policy</Link>
               <Link to="/terms-and-conditions" className="hover:text-emerald-700 hover:underline transition-colors">Terms & Conditions</Link>
             </div>
+
+            {/* Made with Love Badge */}
+            <div className="border-t border-zinc-100 pt-6">
+              <p className="text-sm font-secondary text-zinc-500 flex items-center justify-center">
+                Made with <Heart className="w-4 h-4 text-rose-500 fill-rose-500 mx-1.5" /> in India
+              </p>
+            </div>
+
           </div>
         </footer>
       </div>

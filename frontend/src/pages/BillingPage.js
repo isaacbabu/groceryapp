@@ -249,8 +249,15 @@ const BillingPage = ({ user: initialUser }) => {
 
   const placeOrder = async () => {
     if (billingRows.length === 0) { toast.error('Add items to the bill first'); return; }
+    
     const hasZeroQuantity = billingRows.some(row => !row.quantity || row.quantity <= 0);
     if (hasZeroQuantity) { toast.error('Please enter quantity for all items'); return; }
+    
+    // --- UPDATED POP-UP TO BE GREY (NEUTRAL) INSTEAD OF ERROR RED ---
+    if (grandTotal < 299) { 
+      toast(`Minimum order amount is ₹299. Please add items worth ₹${(299 - grandTotal).toFixed(2)} more to continue.`); 
+      return; 
+    }
     
     if (!user.phone_number || !user.home_address) { 
       setShowAddressModal(true); 
@@ -285,7 +292,7 @@ const BillingPage = ({ user: initialUser }) => {
   return (
     <Layout user={user} setUser={setUser}>
       <div className="flex flex-col h-full relative">
-        <div className="flex-1 overflow-auto p-3 md:p-8 pb-48">
+        <div className="flex-1 overflow-auto p-3 md:p-8 pb-8">
           {editMode && (
             <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -313,6 +320,7 @@ const BillingPage = ({ user: initialUser }) => {
             <h2 className="text-base md:text-lg font-bold font-primary text-emerald-950 mb-1">{editMode ? 'Edit Order' : 'Your Cart'}</h2>
             <p className="text-xs md:text-sm text-zinc-500 font-secondary">{editMode ? 'Modify your existing order' : 'Review your items and place order'}</p>
           </div>
+          
           <div className="w-full border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm">
             <table className="w-full">
               <thead>
@@ -353,26 +361,36 @@ const BillingPage = ({ user: initialUser }) => {
             </table>
           </div>
 
-          <div className="mt-4">
-            <Button data-testid="add-item-btn" onClick={() => navigate('/')} variant="outline" className="w-full h-12 border-2 border-emerald-900 text-emerald-900 hover:bg-emerald-50 transition-all font-secondary text-base">
-              <Plus className="h-5 w-5 mr-2" /> Add More Items
-            </Button>
-          </div>
-        </div>
-
-        {/* Order Bar */}
-        <div className="fixed bottom-16 left-0 right-0 bg-white border-t-2 border-zinc-200 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-40">
-          <div className="max-w-7xl mx-auto px-3 md:px-8 py-3 md:py-4">
+          {/* New In-line Order Bar with Minimum Order Warning */}
+          <div className="mt-6 bg-white border border-zinc-200 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div className="flex flex-col items-start">
-                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 font-primary">Grand Total</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 font-primary">Grand Total</p>
                 <p className="text-2xl md:text-4xl font-mono font-bold text-emerald-950 tracking-tighter leading-tight" data-testid="grand-total">₹{grandTotal.toFixed(2)}</p>
+                
+                {/* Visual warning changed to grey */}
+                {grandTotal > 0 && grandTotal < 299 && (
+                  <p className="text-xs text-zinc-500 font-secondary font-medium mt-1">
+                    Add ₹{(299 - grandTotal).toFixed(2)} more to order
+                  </p>
+                )}
               </div>
-              <Button data-testid="place-order-btn" onClick={placeOrder} className={`${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0`}>
+
+              {/* Button appears slightly faded if criteria is not met, but remains clickable to show the toast warning */}
+              <Button 
+                data-testid="place-order-btn" 
+                onClick={placeOrder} 
+                className={`
+                  ${grandTotal > 0 && grandTotal < 299 ? 'opacity-60 saturate-50' : ''} 
+                  ${editMode ? 'bg-amber-400 hover:bg-amber-500 text-amber-950' : 'bg-lime-400 hover:bg-lime-500 text-lime-950'} 
+                  h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-primary font-bold transition-all whitespace-nowrap flex-shrink-0
+                `}
+              >
                 {editMode ? 'Update Order' : 'Place Order'}
               </Button>
             </div>
           </div>
+          
         </div>
       </div>
 
