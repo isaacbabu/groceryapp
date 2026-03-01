@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom'; // <-- Imported useSearchParams
 import { axiosInstance } from '@/App';
 import { Search, ChevronUp, ChevronDown, Trash2, ShoppingCart, LogIn, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,8 +26,10 @@ const HomePage = () => {
   const [itemQuantities, setItemQuantities] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  // State for the Quick View Modal
-  const [selectedItem, setSelectedItem] = useState(null);
+  // URL-driven state for the Quick View Modal
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedItemId = searchParams.get('item');
+  const selectedItem = items.find(i => i.item_id === selectedItemId) || null;
 
   const fetchItems = async () => {
     try {
@@ -247,7 +250,11 @@ const HomePage = () => {
                     {categoryItems.map(item => (
                       <div 
                         key={item.item_id} 
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => {
+                          const params = new URLSearchParams(searchParams);
+                          params.set('item', item.item_id);
+                          setSearchParams(params);
+                        }}
                         className="relative bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer flex flex-col"
                       >
                         <div className="h-32 md:h-48 bg-zinc-100 overflow-hidden relative">
@@ -351,7 +358,16 @@ const HomePage = () => {
       </Dialog>
 
       {/* Quick View Product Modal */}
-      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+      <Dialog 
+        open={!!selectedItem} 
+        onOpenChange={(open) => {
+          if (!open) {
+            const params = new URLSearchParams(searchParams);
+            params.delete('item');
+            setSearchParams(params);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md p-0 overflow-hidden border-0 shadow-2xl rounded-2xl [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:hover:bg-zinc-100 [&>button]:opacity-100 [&>button]:rounded-full [&>button]:h-8 [&>button]:w-8 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-md [&>button]:z-50 [&>button]:top-4 [&>button]:right-4">
           {selectedItem && (
             <div className="flex flex-col bg-white">
@@ -368,8 +384,15 @@ const HomePage = () => {
                 </Badge>
               </div>
 
+              {/* Image Disclaimer */}
+              <div className="w-full bg-zinc-50 border-b border-zinc-100 py-1.5 px-4 text-center">
+                 <p className="text-[10px] text-zinc-500 font-secondary italic">
+                   * The images shown are for representational purposes only.
+                 </p>
+              </div>
+
               {/* Product Info Content */}
-              <div className="p-6">
+              <div className="px-6 pb-6 pt-5">
                 <DialogHeader className="text-left space-y-0 pr-6">
                   <div className="flex justify-between items-start gap-4">
                     <DialogTitle className="text-2xl font-bold font-primary text-emerald-950 leading-tight">
