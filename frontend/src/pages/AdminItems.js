@@ -4,6 +4,7 @@ import { axiosInstance } from '@/App';
 import { ArrowLeft, Plus, Edit, Trash2, Upload, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea'; // <-- Imported Textarea
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,6 +35,7 @@ const AdminItems = ({ user }) => {
     unit: '1 kg',
     image_url: '',
     category: '',
+    description: '', // <-- Added description to state
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [useCdnUrl, setUseCdnUrl] = useState(false);
@@ -130,6 +132,7 @@ const AdminItems = ({ user }) => {
       unit: formData.unit.trim(),
       image_url: formData.image_url,
       category: formData.category,
+      description: formData.description.trim(), // <-- Add to payload
     };
 
     try {
@@ -144,7 +147,7 @@ const AdminItems = ({ user }) => {
       setShowModal(false);
       setEditingItem(null);
       setUseCdnUrl(false);
-      setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] || '' });
+      setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] || '', description: '' });
       fetchItems();
     } catch (error) {
       const errorDetail = error.response?.data?.detail;
@@ -165,6 +168,7 @@ const AdminItems = ({ user }) => {
       unit: item.unit || '1 kg',
       image_url: item.image_url,
       category: item.category,
+      description: item.description || '', // <-- Pre-fill description
     });
     setShowModal(true);
   };
@@ -184,7 +188,7 @@ const AdminItems = ({ user }) => {
     setShowModal(false);
     setEditingItem(null);
     setUseCdnUrl(false);
-    setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] || '' });
+    setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] || '', description: '' });
   };
 
   const handleOpenAddModal = () => {
@@ -194,7 +198,7 @@ const AdminItems = ({ user }) => {
     }
     setEditingItem(null);
     setUseCdnUrl(false);
-    setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0] });
+    setFormData({ name: '', rate: '', unit: '1 kg', image_url: '', category: categories[0], description: '' });
     setShowModal(true);
   };
 
@@ -249,11 +253,9 @@ const AdminItems = ({ user }) => {
           ) : (
             <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
               <div className="divide-y divide-zinc-100">
-                {/* ADDED INDEX (index) to map function */}
                 {items.map((item, index) => (
                   <div key={item.item_id} className="flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors">
                     
-                    {/* ADDED SL NUMBER */}
                     <div className="w-8 flex-shrink-0 text-center">
                       <span className="text-sm font-mono font-bold text-zinc-400">
                         {index + 1}.
@@ -358,6 +360,20 @@ const AdminItems = ({ user }) => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* --- ADDED DESCRIPTION FIELD HERE --- */}
+            <div>
+              <Label htmlFor="description" className="text-sm font-primary font-bold text-zinc-500 uppercase tracking-wider mb-2 block">
+                Description (Optional)
+              </Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Fresh and high-quality..."
+                className="font-secondary min-h-[80px]"
+              />
             </div>
 
             <div>

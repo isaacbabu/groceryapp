@@ -37,7 +37,7 @@ if not mongo_url:
 client = AsyncIOMotorClient(mongo_url, maxPoolSize=50, minPoolSize=10)
 db = client[os.environ.get('DB_NAME', 'groceryapp')]
 
-# Simple in-memory cache with TTL (Left intact in case you need it for categories)
+# Simple in-memory cache with TTL
 class SimpleCache:
     def __init__(self):
         self.cache = {}
@@ -169,6 +169,7 @@ class Item(BaseModel):
     unit: str = "1 kg"
     image_url: str
     category: str
+    description: Optional[str] = None  # <-- Added description
     created_at: datetime
 
 class ItemCreate(BaseModel):
@@ -177,11 +178,19 @@ class ItemCreate(BaseModel):
     unit: str = Field(default="1 kg", min_length=1, max_length=50)
     image_url: str = Field(..., min_length=1, max_length=5000000)
     category: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=1000) # <-- Added description
     
     @field_validator('name', 'category')
     @classmethod
     def sanitize_text(cls, v):
         return sanitize_string(v, 200)
+        
+    @field_validator('description')
+    @classmethod
+    def sanitize_desc(cls, v):
+        if v is None:
+            return None
+        return sanitize_string(v, 1000)
     
     @field_validator('image_url')
     @classmethod
@@ -449,6 +458,7 @@ async def create_item(item: ItemCreate, request: Request, session_token: Optiona
         "unit": item.unit,
         "image_url": item.image_url,
         "category": item.category,
+        "description": item.description, # <-- Added description
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -469,7 +479,8 @@ async def update_item(item_id: str, item: ItemCreate, request: Request, session_
             "rate": item.rate,
             "unit": item.unit,
             "image_url": item.image_url,
-            "category": item.category
+            "category": item.category,
+            "description": item.description # <-- Added description
         }}
     )
     
@@ -562,6 +573,7 @@ async def seed_sample_items():
                 "unit": item["unit"],
                 "image_url": item["image_url"],
                 "category": item["category"],
+                "description": "", # <-- Defaults to empty string
                 "created_at": datetime.now(timezone.utc)
             }
             await db.items.insert_one(item_doc)

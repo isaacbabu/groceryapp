@@ -24,6 +24,9 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [itemQuantities, setItemQuantities] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  // State for the Quick View Modal
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const fetchItems = async () => {
     try {
@@ -44,7 +47,17 @@ const HomePage = () => {
   const fetchCategories = async () => {
     try {
       const response = await axiosInstance.get('/categories');
-      setCategories(response.data);
+      let fetchedCategories = response.data;
+      
+      // Hardcode 'Pulses' to appear first
+      if (fetchedCategories.includes('Pulses')) {
+        // Remove 'Pulses' from its current position
+        fetchedCategories = fetchedCategories.filter(cat => cat !== 'Pulses');
+        // Add 'Pulses' to the very beginning of the array
+        fetchedCategories.unshift('Pulses');
+      }
+      
+      setCategories(fetchedCategories);
     } catch (error) {
       console.error('Failed to load categories');
     }
@@ -84,7 +97,6 @@ const HomePage = () => {
     checkAuthAndLoadData();
   }, [checkAuthAndLoadData]);
 
-  // Handle direct login for guest users adding items
   const handleLoginPrompt = () => {
     const clientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
     const redirectUri = `${window.location.origin}/auth/callback`;
@@ -124,18 +136,23 @@ const HomePage = () => {
     if (addedItems.has(item.item_id)) updateCartItemQuantity(item, nextQuantity);
   };
 
-  const increaseQuantity = (item) => setQuantity(item, getItemQuantity(item.item_id) + 1);
+  const increaseQuantity = (item, e) => {
+    if (e) e.stopPropagation(); // Prevent modal from opening
+    setQuantity(item, getItemQuantity(item.item_id) + 1);
+  };
   
-  const decreaseQuantity = (item) => {
+  const decreaseQuantity = (item, e) => {
+    if (e) e.stopPropagation(); // Prevent modal from opening
     const currentQty = getItemQuantity(item.item_id);
     if (currentQty > 1) {
       setQuantity(item, currentQty - 1);
     } else {
-      removeFromCart(item);
+      removeFromCart(item, e);
     }
   };
 
-  const addToCart = async (item) => {
+  const addToCart = async (item, e) => {
+    if (e) e.stopPropagation(); // Prevent modal from opening
     if (!user) {
       setShowLoginModal(true);
       return;
@@ -162,7 +179,8 @@ const HomePage = () => {
     }
   };
 
-  const removeFromCart = async (item) => {
+  const removeFromCart = async (item, e) => {
+    if (e) e.stopPropagation(); // Prevent modal from opening
     setAddingItems(prev => new Set([...prev, item.item_id]));
     try {
       const cartResponse = await axiosInstance.get('/cart');
@@ -190,6 +208,7 @@ const HomePage = () => {
   return (
     <Layout user={user} setUser={setUser}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+        {/* Search Bar */}
         <div className="mb-8">
           <div className="max-w-2xl">
             <div className="relative">
@@ -226,54 +245,56 @@ const HomePage = () => {
                   
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                     {categoryItems.map(item => (
-                      <div key={item.item_id} className="relative bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-                        
-                        <div className="h-32 md:h-48 bg-zinc-100 overflow-hidden">
+                      <div 
+                        key={item.item_id} 
+                        onClick={() => setSelectedItem(item)}
+                        className="relative bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer flex flex-col"
+                      >
+                        <div className="h-32 md:h-48 bg-zinc-100 overflow-hidden relative">
                           <img 
                             src={item.image_url} 
                             alt={item.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                             loading="lazy"
                             onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop'; }}
                           />
                         </div>
-                        <div className="p-2 md:p-4">
-                          {/* PRODUCT NAME SIZE INCREASED TO text-sm md:text-base */}
+                        
+                        <div className="p-3 md:p-4 flex flex-col flex-1">
                           <h4 className="font-primary font-bold text-emerald-950 text-sm md:text-base mb-1.5 leading-tight break-words">{item.name}</h4>
                           
-                          <div className="mb-2">
-                            <span className="inline-flex items-center justify-center border border-zinc-300 bg-zinc-100 text-zinc-800 text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium">
+                          <div className="mb-auto">
+                            <span className="inline-flex items-center justify-center border border-zinc-300 bg-zinc-50 text-zinc-600 text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium">
                               {item.unit || '1 kg'}
                             </span>
                           </div>
 
-                          <div className="flex flex-col gap-2">
-                            <div>
-                              <div className="flex items-center gap-1">
-                                <p className="flex items-center text-sm md:text-lg font-bold text-emerald-600 font-primary">
-                                  <IndianRupee className="w-3.5 h-3.5 md:w-4 md:h-4 mr-0.5" strokeWidth={2.5} />
-                                  {item.rate}
-                                </p>
-                              </div>
+                          <div className="mt-3 flex flex-col gap-2">
+                            <div className="flex items-center gap-1">
+                              <p className="flex items-center text-sm md:text-lg font-bold text-emerald-700 font-primary">
+                                <IndianRupee className="w-3.5 h-3.5 md:w-4 md:h-4 mr-0.5" strokeWidth={2.5} />
+                                {item.rate}
+                              </p>
                             </div>
+                            
                             <div className="flex items-center gap-2 mt-1">
                               {addedItems.has(item.item_id) ? (
                                 <>
                                   <div className="flex items-center justify-center gap-1 bg-zinc-100 rounded px-2 py-1.5 flex-1">
-                                    <button onClick={() => decreaseQuantity(item)} className="p-1 hover:bg-zinc-200 rounded">
+                                    <button onClick={(e) => decreaseQuantity(item, e)} className="p-1 hover:bg-zinc-200 rounded">
                                       <ChevronDown className="h-4 w-4 text-zinc-600" />
                                     </button>
                                     <span className="text-sm md:text-base font-bold text-emerald-600 px-2 min-w-[30px] text-center">{getItemQuantity(item.item_id)}</span>
-                                    <button onClick={() => increaseQuantity(item)} className="p-1 hover:bg-zinc-200 rounded">
+                                    <button onClick={(e) => increaseQuantity(item, e)} className="p-1 hover:bg-zinc-200 rounded">
                                       <ChevronUp className="h-4 w-4 text-zinc-600" />
                                     </button>
                                   </div>
-                                  <Button onClick={() => removeFromCart(item)} disabled={addingItems.has(item.item_id)} variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10 border-zinc-300 text-zinc-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200">
+                                  <Button onClick={(e) => removeFromCart(item, e)} disabled={addingItems.has(item.item_id)} variant="outline" size="icon" className="h-9 w-9 md:h-10 md:w-10 border-zinc-300 text-zinc-700 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </>
                               ) : (
-                                <Button onClick={() => addToCart(item)} disabled={addingItems.has(item.item_id)} className="font-secondary text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full" size="sm">
+                                <Button onClick={(e) => addToCart(item, e)} disabled={addingItems.has(item.item_id)} className="font-secondary text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full shadow-sm" size="sm">
                                   {addingItems.has(item.item_id) ? (
                                     <><div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>Adding</>
                                   ) : (
@@ -307,6 +328,7 @@ const HomePage = () => {
         )}
       </div>
 
+      {/* Login Modal */}
       <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -321,13 +343,105 @@ const HomePage = () => {
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
               <LogIn className="w-8 h-8 text-emerald-900" />
             </div>
-            <Button
-              onClick={handleLoginPrompt}
-              className="w-full bg-emerald-900 hover:bg-emerald-950 text-white h-12 text-base font-primary font-medium"
-            >
+            <Button onClick={handleLoginPrompt} className="w-full bg-emerald-900 hover:bg-emerald-950 text-white h-12 text-base font-primary font-medium">
               Sign in with Google
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick View Product Modal */}
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-0 shadow-2xl rounded-2xl [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:hover:bg-zinc-100 [&>button]:opacity-100 [&>button]:rounded-full [&>button]:h-8 [&>button]:w-8 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-md [&>button]:z-50 [&>button]:top-4 [&>button]:right-4">
+          {selectedItem && (
+            <div className="flex flex-col bg-white">
+              {/* Product Image Wrapper */}
+              <div className="relative w-full h-64 sm:h-72 bg-zinc-100">
+                <img 
+                  src={selectedItem.image_url} 
+                  alt={selectedItem.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop'; }}
+                />
+                <Badge className="absolute top-4 left-4 bg-white/90 text-emerald-950 hover:bg-white border-0 shadow-sm backdrop-blur-sm">
+                  {selectedItem.category}
+                </Badge>
+              </div>
+
+              {/* Product Info Content */}
+              <div className="p-6">
+                <DialogHeader className="text-left space-y-0 pr-6">
+                  <div className="flex justify-between items-start gap-4">
+                    <DialogTitle className="text-2xl font-bold font-primary text-emerald-950 leading-tight">
+                      {selectedItem.name}
+                    </DialogTitle>
+                  </div>
+                  
+                  {/* Dynamic Fallback Description */}
+                  <DialogDescription className="text-zinc-500 font-secondary mt-2 text-sm">
+                    {selectedItem.description || `Fresh and high-quality ${selectedItem.name.toLowerCase()} sourced locally. Perfect for your daily household and grocery needs.`}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-6 flex items-center justify-between border-y border-zinc-100 py-4">
+                  <div>
+                    <p className="text-xs text-zinc-500 font-primary uppercase tracking-wider font-bold mb-1">Unit</p>
+                    <span className="inline-flex items-center justify-center border border-zinc-300 bg-zinc-50 text-zinc-700 text-xs px-3 py-1 rounded-full font-medium">
+                      {selectedItem.unit || '1 kg'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-zinc-500 font-primary uppercase tracking-wider font-bold mb-1">Price</p>
+                    <p className="flex items-center justify-end text-2xl font-bold text-emerald-700 font-primary">
+                      <IndianRupee className="w-5 h-5 mr-0.5" strokeWidth={2.5} />
+                      {selectedItem.rate}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Big Add To Cart / Quantity Selector */}
+                <div className="mt-6">
+                  {addedItems.has(selectedItem.item_id) ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded-xl p-2">
+                        <button onClick={(e) => decreaseQuantity(selectedItem, e)} className="p-3 bg-white hover:bg-zinc-100 border border-zinc-200 rounded-lg transition-colors">
+                          <ChevronDown className="h-5 w-5 text-zinc-700" />
+                        </button>
+                        <div className="flex flex-col items-center">
+                          <span className="text-xl font-bold text-emerald-700">{getItemQuantity(selectedItem.item_id)}</span>
+                          <span className="text-[10px] text-zinc-500 font-secondary font-medium uppercase">In Cart</span>
+                        </div>
+                        <button onClick={(e) => increaseQuantity(selectedItem, e)} className="p-3 bg-white hover:bg-zinc-100 border border-zinc-200 rounded-lg transition-colors">
+                          <ChevronUp className="h-5 w-5 text-zinc-700" />
+                        </button>
+                      </div>
+                      
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-sm font-medium text-zinc-500">Total item price:</span>
+                        <span className="font-bold text-emerald-700 flex items-center">
+                          <IndianRupee className="w-3.5 h-3.5 mr-0.5" />
+                          {(selectedItem.rate * getItemQuantity(selectedItem.item_id)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={(e) => addToCart(selectedItem, e)} 
+                      disabled={addingItems.has(selectedItem.item_id)} 
+                      className="w-full h-14 text-base font-primary font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md rounded-xl"
+                    >
+                      {addingItems.has(selectedItem.item_id) ? (
+                        <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>Adding to Cart...</>
+                      ) : (
+                        <><ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart</>
+                      )}
+                    </Button>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>
