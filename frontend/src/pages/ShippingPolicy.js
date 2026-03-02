@@ -10,7 +10,7 @@ const ShippingPolicy = ({ user }) => {
         <div className="space-y-4 font-secondary text-zinc-700 leading-relaxed">
           <p>The orders for the user are shipped through registered domestic courier companies and/or speed post only.</p>
           
-          <p>Orders are shipped within 2 days from the date of the order and/or payment or as per the delivery date agreed at the time of order confirmation and delivering of the shipment, subject to courier company / post office norms.</p>
+          <p>Orders are shipped and delivered within 2 days from the date of the order and/or payment or as per the delivery date agreed at the time of order confirmation and delivering of the shipment, subject to courier company / post office norms.</p>
           
           <p>Platform Owner shall not be liable for any delay in delivery by the courier company / postal authority.</p>
           

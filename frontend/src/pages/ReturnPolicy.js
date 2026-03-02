@@ -22,6 +22,7 @@ const ReturnPolicy = ({ user }) => {
           <p>You agree that there may be a certain category of products / items that are exempted from returns or refunds. Such categories of the products would be identified to you at the item of purchase.</p>
           
           <p>For exchange / return accepted request(s) (as applicable), once your returned product / item is received and inspected by us, we will send you an email to notify you about receipt of the returned / exchanged product.</p>
+          <p>The exchanged product will be delivered within 10 -15 days</p>
           
           <p>Further, if the same has been approved after the quality check at our end, your request (i.e. return / exchange) will be processed in accordance with our policies.</p>
         </div>
